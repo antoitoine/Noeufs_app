@@ -1,7 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Text } from "react-native";
-import Oeufs from "./Oeufs";
+import Oeufs from "./Pages/Oeufs";
 
 const Stack = createNativeStackNavigator();
 

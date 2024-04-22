@@ -9,7 +9,7 @@ export default function Oeufs() {
             {
                 [...Array(100).keys()].map((i: number) => {
                     return (
-                        <Jour key={i} posx={3*i} posy={Math.exp(0.066*i)} />
+                        <Jour key={i} posx={i} posy={200} />
                     )
                 })
             }
