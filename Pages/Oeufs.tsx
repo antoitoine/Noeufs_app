@@ -1,15 +1,21 @@
 import { PlatformColor, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { StackParamList } from "../App";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 // Paramètres
 
-const JOURS_MOIS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const anneeSelectionnee = 2024;
+
+const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
+
+const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const moisSelectionne = 1;
 
-const taille_disque = Dim.scale(5);
+const taille_disque = Dim.scale(5.5);
 const nb_disques = JOURS_MOIS[moisSelectionne];
 
 const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9');
@@ -19,7 +25,7 @@ const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C');
 const couleur_fin_hex2 = Couleur.hexToRgb('#7651FF');
 
 const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
-const couleur_fin = couleur_fin_hex ? [couleur_fin_hex?.r, couleur_fin_hex?.g, couleur_fin_hex?.b] : [0, 0, 0];
+const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, couleur_fin_hex.b] : [0, 0, 0];
 
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
@@ -32,17 +38,26 @@ function getRGBColorFromGradient(gradient: Array<Array<number>>, pos: number): s
     return color;
 }
 
+type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
+
 /**
  * Page principale où se trouve la roue des jours
  */
-export default function Oeufs() {
+export default function Oeufs({route, navigation}: Props) {
 
     const [jourSelectionne, setJourSelectionne] = useState(0);
+
+    useEffect(() => {
+        navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
+    }, [])
+    
 
     return (
         <View style={styles.wrapper}>
 
-            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne+1} {NOMS_MOIS[moisSelectionne]}</Text>
+            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne+1} {NOMS_MOIS[moisSelectionne]} {'\n'} {anneeSelectionnee}</Text>
+
+            <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
 
             {
                 [...Array(nb_disques).keys()].map((i: number) => {
@@ -102,7 +117,7 @@ const styles = StyleSheet.create({
     },
     affichageJour: {
         position: 'absolute',
-        top: Dim.heightScale(5),
+        top: Dim.heightScale(3),
         width: Dim.widthScale(100),
         left: 0,
         textAlign: 'center',
@@ -116,5 +131,15 @@ const styles = StyleSheet.create({
         display: 'flex',
         flex: 1,
         backgroundColor: 'white'
+    },
+    affichageOeufs: {
+        position: 'absolute',
+        bottom: Dim.heightScale(50) - Dim.scale(5),
+        width: Dim.widthScale(50),
+        left: Dim.widthScale(25),
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        fontSize: Dim.scale(10),
+        fontWeight: 'bold'
     }
 });
