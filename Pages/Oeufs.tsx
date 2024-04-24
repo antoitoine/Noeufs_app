@@ -1,4 +1,4 @@
-import { PlatformColor, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useEffect, useState } from "react";
@@ -49,13 +49,13 @@ export default function Oeufs({route, navigation}: Props) {
 
     useEffect(() => {
         navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
-    }, [])
+    }, [jourSelectionne])
     
 
     return (
         <View style={styles.wrapper}>
 
-            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne+1} {NOMS_MOIS[moisSelectionne]} {'\n'} {anneeSelectionnee}</Text>
+            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne+1} {NOMS_MOIS[moisSelectionne]}</Text>
 
             <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
 
@@ -73,7 +73,56 @@ export default function Oeufs({route, navigation}: Props) {
                     )
                 })
             }
+
+            <Bouton
+                posx={Dim.widthScale(2)}
+                posy={Dim.heightScale(2)}
+                width={Dim.widthScale(30)}
+                height={Dim.heightScale(10)}
+                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
+                texte={'Réinitialiser'}
+            />
+
+            <Input
+                posx={Dim.widthScale(34)}
+                posy={Dim.heightScale(2)}
+                width={Dim.widthScale(32)}
+                height={Dim.heightScale(10)}
+                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur2={getRGBColorFromGradient(gradient, jourSelectionne)}
+            />
+
+            <Bouton
+                posx={Dim.widthScale(68)}
+                posy={Dim.heightScale(2)}
+                width={Dim.widthScale(30)}
+                height={Dim.heightScale(10)}
+                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
+                texte={'Non récoltés'}
+            />
+
         </View>
+    )
+}
+
+function Input({posx, posy, width, height, couleur, couleur2}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string}) {
+    return (
+        <TextInput
+            style={[styles.input, styles.inputTexte, {left: posx, bottom: posy, width: width, height: height, borderColor: couleur, color: couleur}]}
+            keyboardType="numeric"
+            placeholder="0"
+            placeholderTextColor={couleur2}
+        />
+    )
+}
+
+function Bouton({posx, posy, width, height, couleur, texte}: {posx: number, posy: number, width: number, height: number, couleur: string, texte: string}) {
+    return (
+        <TouchableOpacity
+            style={[styles.bouton, {left: posx, bottom: posy, width: width, height: height, backgroundColor: couleur}]}
+        >
+            <Text style={[styles.boutonTexte, {width: width, height: height}]}>{texte}</Text>
+        </TouchableOpacity>
     )
 }
 
@@ -117,7 +166,7 @@ const styles = StyleSheet.create({
     },
     affichageJour: {
         position: 'absolute',
-        top: Dim.heightScale(3),
+        bottom: Dim.heightScale(78),
         width: Dim.widthScale(100),
         left: 0,
         textAlign: 'center',
@@ -141,5 +190,37 @@ const styles = StyleSheet.create({
         textAlignVertical: 'center',
         fontSize: Dim.scale(10),
         fontWeight: 'bold'
+    },
+    bouton: {
+        position: 'absolute',
+        bottom: Dim.heightScale(2),
+        left: Dim.widthScale(70),
+        width: Dim.widthScale(20),
+        height: Dim.heightScale(10),
+
+        backgroundColor: 'red',
+        borderRadius: Dim.scale(2)
+    },
+    boutonTexte: {
+        position: 'relative',
+        width: Dim.widthScale(20),
+        height: Dim.heightScale(10),
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        fontWeight: 'bold',
+        color: 'white',
+        fontSize: Dim.scale(4)
+    },
+    input: {
+        position: 'absolute',
+        borderRadius: Dim.scale(2),
+        borderWidth: Dim.scale(1)
+    },
+    inputTexte: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        color: 'black',
+        fontWeight: 'bold',
+        fontSize: Dim.scale(6)
     }
 });

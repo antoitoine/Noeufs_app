@@ -14,7 +14,9 @@ export default function Parametres({route, navigation}: Props) {
 
             </TouchableOpacity>
             <View style={styles.page}>
-                <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
+                    navigation.goBack();
+                }}>
                     <Text style={styles.retourTexte}>Retour</Text>
                 </TouchableOpacity>
             </View>
