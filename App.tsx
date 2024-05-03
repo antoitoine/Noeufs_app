@@ -4,6 +4,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Oeufs from "./Pages/Oeufs";
 import * as Dim from './Utils/Dimensions';
 import Parametres from "./Pages/Parametres";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export type StackParamList = {
     Oeufs: undefined,
@@ -18,46 +19,48 @@ const Stack = createNativeStackNavigator<StackParamList>();
  */
 export default function App() {
     return (
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Oeufs" screenOptions={{gestureEnabled: true }}>
-                <Stack.Group>
-                    <Stack.Screen
-                        name="Oeufs"
-                        component={Oeufs}
-                        options={{
-                            title: "Noeufs",
-                            headerRight(props) {
-                                return <Image source={require('./Images/settings.png')} style={styles.settings} />
-                            },
-                            header(props) {
-                                return (
-                                    <View style={[styles.header, props.options.headerStyle]}>
-                                        
-                                        <Text style={[styles.title, props.options.headerTitleStyle]}>{props.options.title}</Text>
-                                        <TouchableOpacity style={styles.settingsWrapper} onPress={() => {
-                                            props.navigation.navigate('Parametres')
-                                        }}>
-                                            <Image source={require('./Images/settings_white.png')} style={styles.settings} />
-                                        </TouchableOpacity>
-                                    </View>
-                                )
-                            },}}
-                    />
-                </Stack.Group>
-                <Stack.Group screenOptions={{
-                    presentation: 'transparentModal',
-                    headerShown: false,
-                    animation: 'slide_from_bottom',
-                    gestureEnabled: true,
-                    fullScreenGestureEnabled: true
-                }}>
-                    <Stack.Screen
-                        name="Parametres"
-                        component={Parametres}
-                    />
-                </Stack.Group>
-            </Stack.Navigator>
-        </NavigationContainer>
+        <GestureHandlerRootView>
+            <NavigationContainer>
+                <Stack.Navigator initialRouteName="Oeufs" screenOptions={{gestureEnabled: true }}>
+                    <Stack.Group>
+                        <Stack.Screen
+                            name="Oeufs"
+                            component={Oeufs}
+                            options={{
+                                title: "Noeufs",
+                                headerRight(props) {
+                                    return <Image source={require('./Images/settings.png')} style={styles.settings} />
+                                },
+                                header(props) {
+                                    return (
+                                        <View style={[styles.header, props.options.headerStyle]}>
+                                            
+                                            <Text style={[styles.title, props.options.headerTitleStyle]}>{props.options.title}</Text>
+                                            <TouchableOpacity style={styles.settingsWrapper} onPress={() => {
+                                                props.navigation.navigate('Parametres')
+                                            }}>
+                                                <Image source={require('./Images/settings_white.png')} style={styles.settings} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )
+                                },}}
+                        />
+                    </Stack.Group>
+                    <Stack.Group screenOptions={{
+                        presentation: 'transparentModal',
+                        headerShown: false,
+                        animation: 'slide_from_bottom',
+                        gestureEnabled: true,
+                        fullScreenGestureEnabled: true
+                    }}>
+                        <Stack.Screen
+                            name="Parametres"
+                            component={Parametres}
+                        />
+                    </Stack.Group>
+                </Stack.Navigator>
+            </NavigationContainer>
+        </GestureHandlerRootView>
     )
 }
 

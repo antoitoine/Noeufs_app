@@ -1,7 +1,8 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import { StackParamList } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Swipeable } from "react-native-gesture-handler";
 
 type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
 
@@ -18,8 +19,22 @@ export default function Parametres({route, navigation}: Props) {
                     navigation.goBack();
                 }}>
                     <Text style={styles.retourTexte}>Retour</Text>
+
+                    <Swipeable renderLeftActions={Left}>
+                        <View>
+                            <Text>Test</Text>
+                        </View>
+                    </Swipeable>
                 </TouchableOpacity>
             </View>
+        </View>
+    )
+}
+
+function Left() {
+    return (
+        <View>
+            <Text>Left</Text>
         </View>
     )
 }
@@ -57,6 +72,10 @@ const styles = StyleSheet.create({
         position: 'relative',
         top: Dim.scale(2),
         left: Dim.scale(5),
+    },
+
+    test: {
+        backgroundColor: 'red'
     }
 });
 

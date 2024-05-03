@@ -1,9 +1,10 @@
-import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput } from "react-native";
+import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useEffect, useState } from "react";
 import { StackParamList } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import Swipeable  from "react-native-gesture-handler/Swipeable";
 
 // Paramètres
 
@@ -50,29 +51,54 @@ export default function Oeufs({route, navigation}: Props) {
     useEffect(() => {
         navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
-    
+
+    function showDays() {
+        return (
+            [...Array(nb_disques).keys()].map((i: number) => {
+
+                const angle = i * 2 * Math.PI / nb_disques;
+                const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
+                const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
+
+                const color = getRGBColorFromGradient(gradient, i);
+
+                return (
+                    <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => null} selected={i == jourSelectionne } />
+                )
+            })
+        )
+    }
 
     return (
         <View style={styles.wrapper}>
 
             <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne+1} {NOMS_MOIS[moisSelectionne]}</Text>
 
-            <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
+            <View style={styles.defaultPosition}>
+                <Swipeable childrenContainerStyle={styles.defaultPosition} containerStyle={styles.defaultPosition}
+                >
+                    <View style={styles.defaultPosition}>
+                        {
+                            [...Array(nb_disques).keys()].map((i: number) => {
 
-            {
-                [...Array(nb_disques).keys()].map((i: number) => {
+                                const angle = i * 2 * Math.PI / nb_disques;
+                                const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
+                                const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
+                
+                                const color = getRGBColorFromGradient(gradient, i);
+                
+                                return (
+                                    <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
+                                )
+                            })
+                        }
+                    </View>
 
-                    const angle = i * 2 * Math.PI / nb_disques;
-                    const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
-                    const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
+                    <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
 
-                    const color = getRGBColorFromGradient(gradient, i);
+                </Swipeable>
+            </View>
 
-                    return (
-                        <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
-                    )
-                })
-            }
 
             <Bouton
                 posx={Dim.widthScale(2)}
@@ -105,6 +131,14 @@ export default function Oeufs({route, navigation}: Props) {
     )
 }
 
+function Left() {
+    return (
+        <View style={{width: 100, height: 50, backgroundColor: 'red'}}>
+
+        </View>
+    )
+}
+
 function Input({posx, posy, width, height, couleur, couleur2}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string}) {
     return (
         <TextInput
@@ -118,11 +152,11 @@ function Input({posx, posy, width, height, couleur, couleur2}: {posx: number, po
 
 function Bouton({posx, posy, width, height, couleur, texte}: {posx: number, posy: number, width: number, height: number, couleur: string, texte: string}) {
     return (
-        <TouchableOpacity
+        <View
             style={[styles.bouton, {left: posx, bottom: posy, width: width, height: height, backgroundColor: couleur}]}
         >
             <Text style={[styles.boutonTexte, {width: width, height: height}]}>{texte}</Text>
-        </TouchableOpacity>
+        </View>
     )
 }
 
@@ -222,5 +256,12 @@ const styles = StyleSheet.create({
         color: 'black',
         fontWeight: 'bold',
         fontSize: Dim.scale(6)
+    },
+    defaultPosition: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        width: Dim.widthScale(100),
+        height: Dim.heightScale(100)
     }
 });
