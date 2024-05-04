@@ -52,20 +52,35 @@ export default function Oeufs({route, navigation}: Props) {
         navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
 
-    function showDays() {
+    function showDays(transX: Animated.AnimatedInterpolation<string | number>, s : boolean) {
         return (
-            [...Array(nb_disques).keys()].map((i: number) => {
-
-                const angle = i * 2 * Math.PI / nb_disques;
-                const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
-                const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
-
-                const color = getRGBColorFromGradient(gradient, i);
-
-                return (
-                    <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => null} selected={i == jourSelectionne } />
-                )
-            })
+            <Animated.View
+                style={{
+                    position: 'relative',
+                    width: Dim.widthScale(100),
+                    height: Dim.heightScale(100),
+                    bottom: 0,
+                    borderWidth: s ? 3 : 0,
+                    transform: [{translateX: transX}]
+                }}
+            >
+                <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
+                {
+                    [...Array(nb_disques).keys()].map((i: number) => {
+    
+                        const angle = i * 2 * Math.PI / nb_disques;
+                        const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
+                        const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
+    
+                        const color = getRGBColorFromGradient(gradient, i);
+    
+                        return (
+                            <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
+                        )
+                        
+                    })
+                }
+            </Animated.View>
         )
     }
 
@@ -76,25 +91,33 @@ export default function Oeufs({route, navigation}: Props) {
 
             <View style={styles.defaultPosition}>
                 <Swipeable childrenContainerStyle={styles.defaultPosition} containerStyle={styles.defaultPosition}
+                    renderLeftActions={(progress, dragX) => {
+                        const transX = dragX.interpolate({
+                            inputRange: [0, Dim.widthScale(100)],
+                            outputRange: [-Dim.widthScale(100), 0]
+                        })
+
+                        return (
+                            showDays(transX, true)
+                        )
+                    }}
+                    renderRightActions={(progress, dragX) => {
+                        const transX = dragX.interpolate({
+                            inputRange: [-Dim.widthScale(100), 0],
+                            outputRange: [0, Dim.widthScale(100)],
+                        })
+
+                        return (
+                            showDays(transX, true)
+                        )
+                    }}
+                    onEnded={() => {
+                        console.log('Terminated')
+                    }}
                 >
-                    <View style={styles.defaultPosition}>
                         {
-                            [...Array(nb_disques).keys()].map((i: number) => {
-
-                                const angle = i * 2 * Math.PI / nb_disques;
-                                const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
-                                const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
-                
-                                const color = getRGBColorFromGradient(gradient, i);
-                
-                                return (
-                                    <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
-                                )
-                            })
+                            showDays(new Animated.Value(0), false)
                         }
-                    </View>
-
-                    <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
 
                 </Swipeable>
             </View>
@@ -126,14 +149,6 @@ export default function Oeufs({route, navigation}: Props) {
                 couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Non récoltés'}
             />
-
-        </View>
-    )
-}
-
-function Left() {
-    return (
-        <View style={{width: 100, height: 50, backgroundColor: 'red'}}>
 
         </View>
     )
