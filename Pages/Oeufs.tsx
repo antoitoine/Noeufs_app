@@ -1,10 +1,11 @@
 import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StackParamList } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
+import { PanGestureHandler } from "react-native-gesture-handler";
 
 // Paramètres
 
@@ -14,10 +15,8 @@ const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) 
 
 const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-const moisSelectionne = 1;
 
 const taille_disque = Dim.scale(5.5);
-const nb_disques = JOURS_MOIS[moisSelectionne];
 
 const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9');
 const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
@@ -30,9 +29,6 @@ const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, cou
 
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
-
-const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
-const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
 function getRGBColorFromGradient(gradient: Array<Array<number>>, pos: number): string {
     const color = 'rgb(' + gradient[0][pos] + ', ' + gradient[1][pos] + ', ' + gradient[2][pos] + ')';
@@ -47,21 +43,28 @@ type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 export default function Oeufs({route, navigation}: Props) {
 
     const [jourSelectionne, setJourSelectionne] = useState(0);
+    const [moisSelectionne, setMoisSelectionne] = useState(1);
+
+    const translation = useRef(new Animated.Value(0)).current;
+    const nb_disques = JOURS_MOIS[moisSelectionne];
+
+    const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
+    const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
     useEffect(() => {
         navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
 
-    function showDays(transX: Animated.AnimatedInterpolation<string | number>, s : boolean) {
+    function showDays(s : boolean, position: Animated.AnimatedInterpolation<string | number>, background: string) {
         return (
             <Animated.View
                 style={{
-                    position: 'relative',
+                    position: 'absolute',
                     width: Dim.widthScale(100),
                     height: Dim.heightScale(100),
                     bottom: 0,
                     borderWidth: s ? 3 : 0,
-                    transform: [{translateX: transX}]
+                    transform: [{translateX: position}]
                 }}
             >
                 <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
@@ -90,36 +93,74 @@ export default function Oeufs({route, navigation}: Props) {
             <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne+1} {NOMS_MOIS[moisSelectionne]}</Text>
 
             <View style={styles.defaultPosition}>
-                <Swipeable childrenContainerStyle={styles.defaultPosition} containerStyle={styles.defaultPosition}
-                    renderLeftActions={(progress, dragX) => {
-                        const transX = dragX.interpolate({
-                            inputRange: [0, Dim.widthScale(100)],
-                            outputRange: [-Dim.widthScale(100), 0]
-                        })
+                <PanGestureHandler
+                    onGestureEvent={Animated.event([{
+                        nativeEvent: {
+                            translationX: translation
+                        }
+                    }],
+                    {useNativeDriver: true}
+                    )}
+                    onEnded={(event) => {
+                        const dragX = event.nativeEvent.translationX as number
 
-                        return (
-                            showDays(transX, true)
-                        )
-                    }}
-                    renderRightActions={(progress, dragX) => {
-                        const transX = dragX.interpolate({
-                            inputRange: [-Dim.widthScale(100), 0],
-                            outputRange: [0, Dim.widthScale(100)],
-                        })
-
-                        return (
-                            showDays(transX, true)
-                        )
-                    }}
-                    onEnded={() => {
-                        console.log('Terminated')
-                    }}
-                >
-                        {
-                            showDays(new Animated.Value(0), false)
+                        var etat = 0;                 // 0 : Pas de slide / 1 : gauche / 2 : droite
+                        if (Math.abs(dragX) > 80) {
+                            if (dragX < 0) {
+                                etat = 1;
+                            }
+                            else {
+                                etat = 2;
+                            }
                         }
 
-                </Swipeable>
+                        const val = etat == 0 ? 0 : (etat == 1 ? -Dim.widthScale(100) : Dim.widthScale(100));
+
+                        Animated.timing(translation, {
+                            toValue: val,
+                            useNativeDriver: true,
+                        }).start(() => {
+                            translation.setValue(0);
+
+                            if (etat == 2) {
+                                if (moisSelectionne <= 0) {
+                                    setMoisSelectionne(11)
+                                } else {
+                                    setMoisSelectionne(moisSelectionne - 1)
+                                }
+                            }
+                            else if (etat == 1) {
+                                if (moisSelectionne >= 11) {
+                                    setMoisSelectionne(0)
+                                } else {
+                                    setMoisSelectionne(moisSelectionne + 1)
+                                }
+                            }
+                        });
+                    }}
+                >
+                    <Animated.View style={styles.defaultPosition}>
+                        {
+                            showDays(false, translation.interpolate({
+                                inputRange: [-Dim.widthScale(100), Dim.widthScale(100)],
+                                outputRange: [-Dim.widthScale(100), Dim.widthScale(100)]
+                            }), 'red')
+                        }
+                        {
+                            showDays(false, translation.interpolate({
+                                inputRange: [-Dim.widthScale(100), 0],
+                                outputRange: [0, Dim.widthScale(100)]
+                            }), 'blue')
+                        }
+                        {
+                            showDays(false, translation.interpolate({
+                                inputRange: [0, Dim.widthScale(100)],
+                                outputRange: [-Dim.widthScale(100), 0]
+                            }), 'green')
+                        }
+                    </Animated.View>
+
+                </PanGestureHandler>
             </View>
 
 
@@ -189,8 +230,6 @@ function Jour({posx, posy, style, couleur, id, onPress, selected}: {posx: number
             activeOpacity={0.8}
             style={[styles.disqueJour, {left: posx, bottom: posy}, style, {backgroundColor: c}, selected ? styles.selected : styles.notSelected]}
             onPress={() => {
-                const color = getRGBColorFromGradient(gradient2, id);
-                setC(color);
                 onPress(id);
             }}>
             
