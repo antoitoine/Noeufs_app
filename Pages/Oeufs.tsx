@@ -9,11 +9,6 @@ import { PanGestureHandler } from "react-native-gesture-handler";
 
 // Paramètres
 
-const anneeSelectionnee = 2024;
-
-const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
-
-const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 const taille_disque = Dim.scale(5.5);
@@ -43,17 +38,35 @@ type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 export default function Oeufs({route, navigation}: Props) {
 
     const [jourSelectionne, setJourSelectionne] = useState(0);
-    const [moisSelectionne, setMoisSelectionne] = useState(1);
+    const [moisSelectionne, setMoisSelectionne] = useState(24 * 12 + 4);
+
+    const moisReel = moisSelectionne % 12
+
+    console.log(moisSelectionne);
+
+    const anneeSelectionnee = 2000 + Math.floor(moisSelectionne / 12)
+
+    const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
+    const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+    useEffect(() => {
+        
+    }, [anneeSelectionnee])
 
     const translation = useRef(new Animated.Value(0)).current;
-    const nb_disques = JOURS_MOIS[moisSelectionne];
-
+    const nb_disques = JOURS_MOIS === undefined ? 0 : JOURS_MOIS[moisReel];
     const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
     const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
     useEffect(() => {
+        if (jourSelectionne != 0) setJourSelectionne(0);
+    }, [moisReel]);
+
+    useEffect(() => {
         navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
+
+    
 
     function showDays(s : boolean, position: Animated.AnimatedInterpolation<string | number>, background: string) {
         return (
@@ -64,7 +77,7 @@ export default function Oeufs({route, navigation}: Props) {
                     height: Dim.heightScale(100),
                     bottom: 0,
                     borderWidth: s ? 3 : 0,
-                    transform: [{translateX: position}]
+                    transform: [{translateX: position}],
                 }}
             >
                 <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
@@ -90,7 +103,7 @@ export default function Oeufs({route, navigation}: Props) {
     return (
         <View style={styles.wrapper}>
 
-            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne+1} {NOMS_MOIS[moisSelectionne]}</Text>
+            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]}</Text>
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -122,20 +135,8 @@ export default function Oeufs({route, navigation}: Props) {
                         }).start(() => {
                             translation.setValue(0);
 
-                            if (etat == 2) {
-                                if (moisSelectionne <= 0) {
-                                    setMoisSelectionne(11)
-                                } else {
-                                    setMoisSelectionne(moisSelectionne - 1)
-                                }
-                            }
-                            else if (etat == 1) {
-                                if (moisSelectionne >= 11) {
-                                    setMoisSelectionne(0)
-                                } else {
-                                    setMoisSelectionne(moisSelectionne + 1)
-                                }
-                            }
+                            if (etat == 2) setMoisSelectionne(moisSelectionne - 1)
+                            else if (etat == 1) setMoisSelectionne(moisSelectionne + 1)
                         });
                     }}
                 >
@@ -208,11 +209,12 @@ function Input({posx, posy, width, height, couleur, couleur2}: {posx: number, po
 
 function Bouton({posx, posy, width, height, couleur, texte}: {posx: number, posy: number, width: number, height: number, couleur: string, texte: string}) {
     return (
-        <View
+        <TouchableOpacity
+            activeOpacity={0.8}
             style={[styles.bouton, {left: posx, bottom: posy, width: width, height: height, backgroundColor: couleur}]}
         >
             <Text style={[styles.boutonTexte, {width: width, height: height}]}>{texte}</Text>
-        </View>
+        </TouchableOpacity>
     )
 }
 
