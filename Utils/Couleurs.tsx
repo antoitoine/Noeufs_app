@@ -54,4 +54,10 @@ function hexToRgb(hex: string) {
     } : null;
   }
 
-export {degradeTableau, degradeCouleur, hexToRgb};
+
+function getRGBColorFromGradient(gradient: Array<Array<number>>, pos: number): string {
+    const color = 'rgb(' + gradient[0][pos] + ', ' + gradient[1][pos] + ', ' + gradient[2][pos] + ')';
+    return color;
+}
+
+export {degradeTableau, degradeCouleur, hexToRgb, getRGBColorFromGradient};

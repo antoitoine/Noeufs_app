@@ -13,10 +13,10 @@ const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juill
 
 const taille_disque = Dim.scale(5.5);
 
-const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9');
+const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
 const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
 
-const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C');
+const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C'); // Foncées
 const couleur_fin_hex2 = Couleur.hexToRgb('#7651FF');
 
 const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
@@ -25,10 +25,8 @@ const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, cou
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
-function getRGBColorFromGradient(gradient: Array<Array<number>>, pos: number): string {
-    const color = 'rgb(' + gradient[0][pos] + ', ' + gradient[1][pos] + ', ' + gradient[2][pos] + ')';
-    return color;
-}
+export var idJour = 0
+export var nbJours = 30
 
 type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
@@ -41,9 +39,6 @@ export default function Oeufs({route, navigation}: Props) {
     const [moisSelectionne, setMoisSelectionne] = useState(24 * 12 + 4);
 
     const moisReel = moisSelectionne % 12
-
-    console.log(moisSelectionne);
-
     const anneeSelectionnee = 2000 + Math.floor(moisSelectionne / 12)
 
     const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
@@ -58,12 +53,15 @@ export default function Oeufs({route, navigation}: Props) {
     const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
     const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
+    idJour = jourSelectionne
+    nbJours = nb_disques
+
     useEffect(() => {
         if (jourSelectionne != 0) setJourSelectionne(0);
     }, [moisReel]);
 
     useEffect(() => {
-        navigation.setOptions({headerStyle: {backgroundColor: getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
+        navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
 
     
@@ -80,7 +78,7 @@ export default function Oeufs({route, navigation}: Props) {
                     transform: [{translateX: position}],
                 }}
             >
-                <Text style={[styles.affichageOeufs, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
+                <Text style={[styles.affichageOeufs, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
                 {
                     [...Array(nb_disques).keys()].map((i: number) => {
     
@@ -88,7 +86,7 @@ export default function Oeufs({route, navigation}: Props) {
                         const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
                         const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
     
-                        const color = getRGBColorFromGradient(gradient, i);
+                        const color = Couleur.getRGBColorFromGradient(gradient, i);
     
                         return (
                             <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
@@ -103,7 +101,7 @@ export default function Oeufs({route, navigation}: Props) {
     return (
         <View style={styles.wrapper}>
 
-            <Text style={[styles.affichageJour, {color: getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]}</Text>
+            <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]}</Text>
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -170,7 +168,7 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={Dim.heightScale(2)}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Réinitialiser'}
             />
 
@@ -179,8 +177,8 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={Dim.heightScale(2)}
                 width={Dim.widthScale(32)}
                 height={Dim.heightScale(10)}
-                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
-                couleur2={getRGBColorFromGradient(gradient, jourSelectionne)}
+                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur2={Couleur.getRGBColorFromGradient(gradient, jourSelectionne)}
             />
 
             <Bouton
@@ -188,7 +186,7 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={Dim.heightScale(2)}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Non récoltés'}
             />
 

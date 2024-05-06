@@ -1,4 +1,4 @@
-import { Alert, Animated, ImageBackground, StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import { StackParamList } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -6,12 +6,19 @@ import { useEffect, useRef, useState } from "react";
 import { User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { auth } from '../firebase';
 import { TextInput } from "react-native-gesture-handler";
+import * as Couleur from '../Utils/Couleurs'
+import { idJour, nbJours } from "./Oeufs";
+
+const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
+const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
+const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
+const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, couleur_fin_hex.b] : [0, 0, 0];
+const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nbJours)
 
 type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
 
 export default function Parametres({route, navigation}: Props) {
 
-    const [initializing, setInitializing] = useState(false)
     const [user, setUser] = useState<User>()
 
     const [warnMessages, setWarnMessages] = useState({email: '', password: ''})
@@ -21,16 +28,17 @@ export default function Parametres({route, navigation}: Props) {
     const password = useRef("");
     const name = useRef("");
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            console.log('User connected : ')
-            console.log(user.email)
-            console.log(user.displayName)
-            setUser(user)
-        } else {
-            setUser(undefined)
-        }
-    })
+    useEffect(() => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User connected : ' + user.email + ' ' + user.displayName)
+                setUser(user)
+            } else {
+                setUser(undefined)
+            }
+        })
+    }, [])
+    
 
     function createNewUser() {
         console.log('Création d\'un nouveau compte...')
@@ -116,9 +124,6 @@ export default function Parametres({route, navigation}: Props) {
         )
     }
 
-    if (initializing) // Chargement de la page
-        return null
-
     if (!user) { // Utilisateur déconnecté
         return (
             <View style={styles.wrapper}>
@@ -128,7 +133,7 @@ export default function Parametres({route, navigation}: Props) {
 
                 </TouchableOpacity>
 
-                <View style={styles.page}>
+                <View style={[styles.page, {backgroundColor: Couleur.getRGBColorFromGradient(gradient, nbJours - idJour - 1)}]}>
                     <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
                         navigation.goBack();
                     }}>
@@ -196,15 +201,16 @@ export default function Parametres({route, navigation}: Props) {
             }}>
 
             </TouchableOpacity>
-            <View style={styles.page}>
+            <View style={[styles.page, {backgroundColor: Couleur.getRGBColorFromGradient(gradient, nbJours - idJour - 1)}]}>
                 <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
                     navigation.goBack();
                 }}>
                     <Text style={styles.retourTexte}>Retour</Text>
                 </TouchableOpacity>
 
-                <Text>Signed up</Text>
+                <Text style={styles.displayName}>{user.displayName}</Text>
                 <TouchableOpacity
+                    style={deconnexionStyle.button}
                     onPress={() => {
                         console.log('Déconnexion...')
                         signOut(auth).then(() => {
@@ -214,7 +220,7 @@ export default function Parametres({route, navigation}: Props) {
                         })
                     }}
                 >
-                    <Text>Se déconnecter</Text>
+                    <Text style={deconnexionStyle.text}>Se déconnecter</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -250,6 +256,26 @@ function InputField({title, password=false, onSubmit, footer='', footerColor='bl
     )
 }
 
+const deconnexionStyle = StyleSheet.create({
+    button: {
+        position: 'absolute',
+        bottom: Dim.heightScale(5),
+        width: Dim.widthScale(40),
+        height: Dim.heightScale(5),
+        left: Dim.widthScale(30),
+        borderRadius: Dim.scale(1)
+    },
+    text: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        fontSize: Dim.scale(4),
+
+        color: 'white',
+        fontWeight: 'bold',
+        textShadowRadius: 5
+    }
+})
+
 const inputStyle = StyleSheet.create({
     footer: {
         textAlign: 'left',
@@ -267,7 +293,7 @@ const styles = StyleSheet.create({
         left: 0,
         height: Dim.heightScale(95),
         width: Dim.widthScale(100),
-        backgroundColor: '#DAC4F7',
+        backgroundColor: "#C8B9FC",
         borderTopRightRadius: Dim.scale(5),
         borderTopLeftRadius: Dim.scale(5),
     },
@@ -343,7 +369,19 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(5),
-        color: 'black'
+        color: 'black',
+    },
+    
+    displayName: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        width: Dim.widthScale(100),
+        position: 'absolute',
+        top: Dim.heightScale(5),
+        color: 'white',
+        fontSize: Dim.scale(6),
+        textShadowRadius: 10,
+        fontWeight: 'bold'
     }
 });
 
