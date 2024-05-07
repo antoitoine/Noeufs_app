@@ -1,7 +1,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, initializeAuth,  } from "firebase/auth";
+import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage"
+import { getDatabase } from "firebase/database";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -10,6 +13,7 @@ import { getAuth, initializeAuth,  } from "firebase/auth";
 const firebaseConfig = {
   apiKey: "AIzaSyC7tVwHxkcYpV8L0lRaPU--QM2_wuP-Z3w",
   authDomain: "noeufs.firebaseapp.com",
+  databaseURL: "https://noeufs-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "noeufs",
   storageBucket: "noeufs.appspot.com",
   messagingSenderId: "142706055377",
@@ -19,6 +23,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = initializeAuth(app);
+const auth = initializeAuth(app, {persistence: getReactNativePersistence(ReactNativeAsyncStorage)});
+const database = getDatabase()
 
-export { app, auth }
+export { app, auth, database }

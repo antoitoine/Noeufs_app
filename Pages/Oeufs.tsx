@@ -1,4 +1,4 @@
-import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated } from "react-native";
+import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, Alert } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useEffect, useRef, useState } from "react";
@@ -6,6 +6,9 @@ import { StackParamList } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
+import { database, auth } from "../firebase";
+import { User, onAuthStateChanged } from "firebase/auth";
+import { onValue, ref, remove, set } from "firebase/database";
 
 // Paramètres
 
@@ -26,7 +29,7 @@ const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debu
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
 export var idJour = 0
-export var nbJours = 30
+export var nbJours = 31
 
 type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
@@ -45,11 +48,11 @@ export default function Oeufs({route, navigation}: Props) {
     const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
     useEffect(() => {
-        
-    }, [anneeSelectionnee])
+        if (jourSelectionne != 0) setJourSelectionne(0);
+    }, [moisReel]);
 
     const translation = useRef(new Animated.Value(0)).current;
-    const nb_disques = JOURS_MOIS === undefined ? 0 : JOURS_MOIS[moisReel];
+    const nb_disques = JOURS_MOIS[moisReel]
     const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
     const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
@@ -57,16 +60,68 @@ export default function Oeufs({route, navigation}: Props) {
     nbJours = nb_disques
 
     useEffect(() => {
-        if (jourSelectionne != 0) setJourSelectionne(0);
-    }, [moisReel]);
-
-    useEffect(() => {
         navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
 
-    
+    /* Database & Auth */
 
-    function showDays(s : boolean, position: Animated.AnimatedInterpolation<string | number>, background: string) {
+    const [user, setUser] = useState<User | undefined>(undefined)
+
+    const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(nb_disques))
+    const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(nb_disques))
+
+    useEffect(() => { // Connexion à un utilisateur
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
+                setUser(user)
+            } else {
+                setUser(undefined)                                                     // Déconnexion
+            }
+        })
+    }, [])
+    
+    useEffect(() => { // Récupération des données du mois
+        if (user) {
+            onValue(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
+                const data = snapshot.val()
+                console.log('Récupération des données')
+                if (data) {
+                    for (var i = 0; i < nb_disques; ++i) {
+                        if (data[i] !== undefined) {
+                            nbOeufsParJour_ref.current[i] = data[i]['nbOeufs']
+                        } else {
+                            nbOeufsParJour_ref.current[i] = undefined
+                        }
+                        
+                    }
+                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                } else {
+                    console.log('Aucun oeuf dans le mois')
+                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                }
+                
+                
+            })
+        } else {
+            console.log('Pas d\'utilisateur connecté')
+            nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+            setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+        }
+    }, [moisSelectionne, user])
+
+    /* Calcul affichage du nombre d'oeufs */
+
+    var nbOeufs_text = ''
+    const nbOeufs_jour = nbOeufsParJour[jourSelectionne]
+
+    if (nbOeufs_jour === undefined) nbOeufs_text = '?'
+    else if (nbOeufs_jour < 0)      nbOeufs_text = 'Pas de récolte'
+    else if (nbOeufs_jour <= 1)     nbOeufs_text = nbOeufs_jour + ' Oeuf'
+    else                            nbOeufs_text = nbOeufs_jour + ' Oeufs'
+
+    function showDays(s : boolean, position: Animated.AnimatedInterpolation<string | number>) {
         return (
             <Animated.View
                 style={{
@@ -78,15 +133,17 @@ export default function Oeufs({route, navigation}: Props) {
                     transform: [{translateX: position}],
                 }}
             >
-                <Text style={[styles.affichageOeufs, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>5 Oeufs</Text>
+                <Text style={[styles.affichageOeufs, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>
+                    {nbOeufs_text}
+                </Text>
                 {
                     [...Array(nb_disques).keys()].map((i: number) => {
     
                         const angle = i * 2 * Math.PI / nb_disques;
                         const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
-                        const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;  
-    
-                        const color = Couleur.getRGBColorFromGradient(gradient, i);
+                        const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;
+                        
+                        const color = Couleur.getRGBColorFromGradient(nbOeufsParJour[i] !== undefined ? gradient2 : gradient, i)
     
                         return (
                             <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
@@ -143,19 +200,19 @@ export default function Oeufs({route, navigation}: Props) {
                             showDays(false, translation.interpolate({
                                 inputRange: [-Dim.widthScale(100), Dim.widthScale(100)],
                                 outputRange: [-Dim.widthScale(100), Dim.widthScale(100)]
-                            }), 'red')
+                            }))
                         }
                         {
                             showDays(false, translation.interpolate({
                                 inputRange: [-Dim.widthScale(100), 0],
                                 outputRange: [0, Dim.widthScale(100)]
-                            }), 'blue')
+                            }))
                         }
                         {
                             showDays(false, translation.interpolate({
                                 inputRange: [0, Dim.widthScale(100)],
                                 outputRange: [-Dim.widthScale(100), 0]
-                            }), 'green')
+                            }))
                         }
                     </Animated.View>
 
@@ -170,6 +227,14 @@ export default function Oeufs({route, navigation}: Props) {
                 height={Dim.heightScale(10)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Réinitialiser'}
+                onPress={() => {
+                    if (user) {
+                        remove(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
+                    } else {
+                        console.log('Veuillez vous connecter')
+                        alertConnexion()
+                    }
+                }}
             />
 
             <Input
@@ -179,6 +244,17 @@ export default function Oeufs({route, navigation}: Props) {
                 height={Dim.heightScale(10)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 couleur2={Couleur.getRGBColorFromGradient(gradient, jourSelectionne)}
+                onSubmit={(value: number) => {
+                    if (user && !Number.isNaN(value)) {
+                        set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
+                            nbOeufs: value
+                        })
+                    } else {
+                        console.log('Veuillez vous connecter')
+                        alertConnexion()
+                    }
+                    
+                }}
             />
 
             <Bouton
@@ -188,28 +264,73 @@ export default function Oeufs({route, navigation}: Props) {
                 height={Dim.heightScale(10)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Non récoltés'}
+                onPress={() => {
+                    if (user) {
+                        set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
+                            nbOeufs: -1
+                        })
+                    } else {
+                        console.log('Veuillez vous connecter')
+                        alertConnexion()
+                    }
+                }}
             />
 
         </View>
     )
+
+    function alertConnexion() {
+        Alert.alert(
+            'Connexion requise',
+            'Connectez-vous pour enregistrer une récolte !',
+            [
+                {
+                    text: 'Se connecter',
+                    onPress: () => {
+                        navigation.navigate('Parametres')
+                    },
+                    style: 'default'
+                }
+            ],
+            {
+                cancelable: true,
+                onDismiss: () => {
+                    
+                }
+            }
+        )
+    }
 }
 
-function Input({posx, posy, width, height, couleur, couleur2}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string}) {
+function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string, onSubmit: Function}) {
+    
+    const text = useRef('')
+    
     return (
         <TextInput
             style={[styles.input, styles.inputTexte, {left: posx, bottom: posy, width: width, height: height, borderColor: couleur, color: couleur}]}
             keyboardType="numeric"
             placeholder="0"
             placeholderTextColor={couleur2}
+            onBlur={() => {
+                onSubmit(parseInt(text.current))
+                text.current = ''                 // Sinon, enregistre la précédente valeur même en changeant de jour
+            }}
+            onChangeText={(t) => {
+                text.current = t
+            }}
         />
     )
 }
 
-function Bouton({posx, posy, width, height, couleur, texte}: {posx: number, posy: number, width: number, height: number, couleur: string, texte: string}) {
+function Bouton({posx, posy, width, height, couleur, texte, onPress}: {posx: number, posy: number, width: number, height: number, couleur: string, texte: string, onPress: Function}) {
     return (
         <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.bouton, {left: posx, bottom: posy, width: width, height: height, backgroundColor: couleur}]}
+            onPress={() => {
+                onPress()
+            }}
         >
             <Text style={[styles.boutonTexte, {width: width, height: height}]}>{texte}</Text>
         </TouchableOpacity>
@@ -217,8 +338,6 @@ function Bouton({posx, posy, width, height, couleur, texte}: {posx: number, posy
 }
 
 function Jour({posx, posy, style, couleur, id, onPress, selected}: {posx: number, posy: number, style?: Object, couleur: string, id: number, onPress: Function, selected: Boolean}) {
-
-    const [c, setC] = useState(couleur);
 
     if(selected) {
         posx += taille_disque / 4
@@ -228,7 +347,7 @@ function Jour({posx, posy, style, couleur, id, onPress, selected}: {posx: number
     return (
         <TouchableOpacity
             activeOpacity={0.8}
-            style={[styles.disqueJour, {left: posx, bottom: posy}, style, {backgroundColor: c}, selected ? styles.selected : styles.notSelected]}
+            style={[styles.disqueJour, {left: posx, bottom: posy}, style, {backgroundColor: couleur}, selected ? styles.selected : styles.notSelected]}
             onPress={() => {
                 onPress(id);
             }}>
@@ -271,9 +390,10 @@ const styles = StyleSheet.create({
     },
     affichageOeufs: {
         position: 'absolute',
-        bottom: Dim.heightScale(50) - Dim.scale(5),
+        bottom: Dim.heightScale(40) - Dim.scale(5),
         width: Dim.widthScale(50),
         left: Dim.widthScale(25),
+        height: Dim.heightScale(25),
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(10),
