@@ -51,7 +51,7 @@ export default function Oeufs({route, navigation}: Props) {
 
     useEffect(() => {
         if (jourSelectionne != 0) setJourSelectionne(0);
-    }, [moisReel]);
+    }, [moisSelectionne]);
 
     const translation = useRef(new Animated.Value(0)).current;
     const nb_disques = JOURS_MOIS[moisReel]
@@ -156,6 +156,33 @@ export default function Oeufs({route, navigation}: Props) {
     }, [moisSelectionne, user])
 
     /* Async storage */
+
+    const removeDayData = async() => {
+        console.log('removeData')
+
+        try {
+            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
+                var json_value = res !== null ? JSON.parse(res) : null
+                const j = jourSelectionne.toString()
+                const m = moisSelectionne.toString()
+
+                if (json_value !== null && m in json_value && j in json_value[m]) {
+                    delete json_value[m][j]
+                }
+
+                try {
+                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
+                        nbOeufsParJour_ref.current[jourSelectionne] = undefined
+                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                    })
+                } catch(e) {
+                    console.error(e)
+                }
+            })
+        } catch(e) {
+            console.error(e)
+        }
+    }
 
     const setData = async(value: string) => {
 
@@ -337,8 +364,7 @@ export default function Oeufs({route, navigation}: Props) {
                     if (user) {
                         remove(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
                     } else {
-                        console.log('Veuillez vous connecter')
-                        alertConnexion()
+                        removeDayData()
                     }
                 }}
             />
@@ -393,8 +419,7 @@ export default function Oeufs({route, navigation}: Props) {
                             nbOeufs: -1
                         })
                     } else {
-                        console.log('Veuillez vous connecter')
-                        alertConnexion()
+                        setData("-1")
                     }
                 }}
             />
