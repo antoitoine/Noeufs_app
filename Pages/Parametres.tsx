@@ -249,6 +249,9 @@ function InputField({title, password=false, onSubmit, footer='', footerColor='bl
                     onBlur={() => {
                         onSubmit(text.current);
                     }}
+                    returnKeyType="done"
+                    keyboardType={password ? "default" : "email-address"}
+                    autoCapitalize="none"
                 />
             </View>
             <Text style={[inputStyle.footer, {color: footerColor}]}>{footer}</Text>
@@ -339,6 +342,7 @@ const styles = StyleSheet.create({
         fontSize: Dim.scale(4),
         color: 'black',
         width: Dim.widthScale(80),
+        height: Dim.heightScale(5)
     },
     connexionTitle: {
         fontSize: Dim.scale(6),
@@ -355,17 +359,19 @@ const styles = StyleSheet.create({
     textField: {
         textAlign: 'center',
         color: 'grey',
-        fontSize: Dim.scale(3),
+        fontSize: Dim.scale(3)
     },
 
     connexionButton: {
         borderRadius: Dim.scale(2),
         width: Dim.widthScale(50),
         height: Dim.heightScale(5),
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     connexionButtonText: {
-        flex: 1,
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(5),

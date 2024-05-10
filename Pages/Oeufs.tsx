@@ -1,4 +1,4 @@
-import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, Alert } from "react-native";
+import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, Alert, KeyboardAvoidingView, Keyboard } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +9,8 @@ import { PanGestureHandler } from "react-native-gesture-handler";
 import { database, auth } from "../firebase";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { onValue, ref, remove, set } from "firebase/database";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Paramètres
 
@@ -63,12 +65,19 @@ export default function Oeufs({route, navigation}: Props) {
         navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
     }, [jourSelectionne])
 
+    /* Insets */
+
+    const insets = useSafeAreaInsets()
+    const bottomPos = insets.bottom
+
     /* Database & Auth */
 
     const [user, setUser] = useState<User | undefined>(undefined)
 
     const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(nb_disques))
     const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(nb_disques))
+
+    const nbOeufsInput = useRef<number | null>(null)
 
     useEffect(() => { // Connexion à un utilisateur
         onAuthStateChanged(auth, (user) => {
@@ -106,10 +115,97 @@ export default function Oeufs({route, navigation}: Props) {
             })
         } else {
             console.log('Pas d\'utilisateur connecté')
-            nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
-            setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+            
+            AsyncStorage.getItem('oeufsStorage').then((value) => {
+                console.log('getItem')
+                const v = value !== null ? JSON.parse(value) : null
+                console.log(v)
+
+                if (v !== null) { // oeufsStorage existe
+                    console.log('oeufsStorage existe')
+                    const m = moisSelectionne.toString()
+                    if (m in v) { // Mois contient des oeufs
+                        console.log('Mois contient des oeufs')
+                        for (var i = 0; i < nb_disques; ++i) {
+                            if (i.toString() in v[m]) {
+                                nbOeufsParJour_ref.current[i] = v[m][i.toString()].nbOeufs
+                            } else {
+                                nbOeufsParJour_ref.current[i] = undefined
+                            }
+                        }
+                    } else { // Mois ne contient pas d'oeufs
+                        console.log('Mois ne contient pas d\'oeufs')
+                        nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                    }
+                } else { // oeufsStorage n'existe pas
+                    console.log('oeufs storage n\'existe pas')
+                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                }
+
+                console.log('Update nbOeufs :')
+                console.log(nbOeufsParJour_ref.current)
+
+                setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                
+            }).catch(error => {
+                console.error(error)
+            })
+
+            
         }
     }, [moisSelectionne, user])
+
+    /* Async storage */
+
+    const setData = async(value: string) => {
+
+        console.log('setData(' + value + ')')
+
+        try {
+            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
+                var json_value = res !== null ? JSON.parse(res) : null
+                const j = jourSelectionne.toString()
+                const m = moisSelectionne.toString()
+
+                if (json_value !== null) {
+                    if (m in json_value) {
+                        if (j in json_value[m]) { // Mois + jour
+                            json_value[m][j].nbOeufs = value
+                        } else { // Mois
+                            json_value[m] = {
+                                ...json_value[m],
+                                [j]: {"nbOeufs": value}
+                            }
+                        }
+                    } else { // Aucun
+                        json_value[m] = {
+                            [j]: {"nbOeufs": value}
+                        }
+                    }
+                } else { // Première connexion ? Pas de oeufsStorage
+                    console.log('Aucune donnée... Création de oeufsStorage')
+                    json_value = {
+                        [m]: {
+                            [j]: {"nbOeufs": value}
+                        }
+                    }
+                }
+
+                console.log('Set : ' + JSON.stringify(json_value))
+                try {
+                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
+                        console.log('Data set')
+                        nbOeufsParJour_ref.current[jourSelectionne] = parseInt(value)
+                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                    })
+                } catch(e) {
+                    console.error(e)
+                }
+            })
+        } catch(e) {
+            console.error(e)
+        }
+    }
 
     /* Calcul affichage du nombre d'oeufs */
 
@@ -133,9 +229,12 @@ export default function Oeufs({route, navigation}: Props) {
                     transform: [{translateX: position}],
                 }}
             >
-                <Text style={[styles.affichageOeufs, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>
-                    {nbOeufs_text}
-                </Text>
+                
+                <View style={styles.affichageOeufs}>
+                    <Text style={[styles.affichageOeufsText, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>
+                        {nbOeufs_text}
+                    </Text>
+                </View>
                 {
                     [...Array(nb_disques).keys()].map((i: number) => {
     
@@ -156,9 +255,16 @@ export default function Oeufs({route, navigation}: Props) {
     }
 
     return (
-        <View style={styles.wrapper}>
+        <KeyboardAvoidingView
+            onTouchStart={(event) => {
+                setTimeout(() => Keyboard.dismiss(), 200)
+            }}
+            style={{flex: 1}} contentContainerStyle={styles.wrapper}
+            behavior="height"
+            keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
+        >
 
-            <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{anneeSelectionnee} {'\n'} {jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]}</Text>
+            <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -222,7 +328,7 @@ export default function Oeufs({route, navigation}: Props) {
 
             <Bouton
                 posx={Dim.widthScale(2)}
-                posy={Dim.heightScale(2)}
+                posy={bottomPos}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
@@ -237,29 +343,46 @@ export default function Oeufs({route, navigation}: Props) {
                 }}
             />
 
-            <Input
-                posx={Dim.widthScale(34)}
-                posy={Dim.heightScale(2)}
-                width={Dim.widthScale(32)}
-                height={Dim.heightScale(10)}
+            <Bouton
+                posx={Dim.widthScale(2)}
+                posy={bottomPos + Dim.heightScale(11)}
+                width={Dim.widthScale(96)}
+                height={Dim.heightScale(5)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
-                couleur2={Couleur.getRGBColorFromGradient(gradient, jourSelectionne)}
-                onSubmit={(value: number) => {
-                    if (user && !Number.isNaN(value)) {
-                        set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                            nbOeufs: value
-                        })
+                texte="Valider"
+                onPress={() => {
+                    Keyboard.dismiss()
+                    if (!Number.isNaN(nbOeufsInput.current)) {
+                        if (user) {
+                            set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
+                                nbOeufs: nbOeufsInput.current
+                            })
+                        } else {
+                            if (nbOeufsInput.current !== null)
+                                setData(nbOeufsInput.current.toString())
+                        }
                     } else {
-                        console.log('Veuillez vous connecter')
-                        alertConnexion()
+                        console.log('Nombre entré incorrect')
                     }
                     
                 }}
             />
 
+            <Input
+                posx={Dim.widthScale(34)}
+                posy={bottomPos}
+                width={Dim.widthScale(32)}
+                height={Dim.heightScale(10)}
+                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur2={Couleur.getRGBColorFromGradient(gradient, jourSelectionne)}
+                onSubmit={(value: number) => {
+                    nbOeufsInput.current = value
+                }}
+            />
+
             <Bouton
                 posx={Dim.widthScale(68)}
-                posy={Dim.heightScale(2)}
+                posy={bottomPos}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
@@ -276,7 +399,7 @@ export default function Oeufs({route, navigation}: Props) {
                 }}
             />
 
-        </View>
+        </KeyboardAvoidingView>
     )
 
     function alertConnexion() {
@@ -318,7 +441,10 @@ function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: 
             }}
             onChangeText={(t) => {
                 text.current = t
+                onSubmit(parseInt(text.current))
             }}
+            onStartShouldSetResponder={(event) => true}
+            onTouchStart={(event) => event.stopPropagation()}
         />
     )
 }
@@ -327,12 +453,12 @@ function Bouton({posx, posy, width, height, couleur, texte, onPress}: {posx: num
     return (
         <TouchableOpacity
             activeOpacity={0.8}
-            style={[styles.bouton, {left: posx, bottom: posy, width: width, height: height, backgroundColor: couleur}]}
-            onPress={() => {
+            style={[styles.bouton, {left: posx, width: width, height: height, backgroundColor: couleur, bottom: posy}]}
+            onPress={(event) => {
                 onPress()
             }}
         >
-            <Text style={[styles.boutonTexte, {width: width, height: height}]}>{texte}</Text>
+            <Text style={[styles.boutonTexte]}>{texte}</Text>
         </TouchableOpacity>
     )
 }
@@ -391,9 +517,14 @@ const styles = StyleSheet.create({
     affichageOeufs: {
         position: 'absolute',
         bottom: Dim.heightScale(40) - Dim.scale(5),
-        width: Dim.widthScale(50),
-        left: Dim.widthScale(25),
-        height: Dim.heightScale(25),
+        width: Dim.scale(50),
+        left: Dim.scale(25),
+        height: Dim.scale(50),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    affichageOeufsText: {
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(10),
@@ -401,18 +532,18 @@ const styles = StyleSheet.create({
     },
     bouton: {
         position: 'absolute',
-        bottom: Dim.heightScale(2),
         left: Dim.widthScale(70),
         width: Dim.widthScale(20),
         height: Dim.heightScale(10),
 
         backgroundColor: 'red',
-        borderRadius: Dim.scale(2)
+        borderRadius: Dim.scale(2),
+
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     boutonTexte: {
-        position: 'relative',
-        width: Dim.widthScale(20),
-        height: Dim.heightScale(10),
         textAlign: 'center',
         textAlignVertical: 'center',
         fontWeight: 'bold',
