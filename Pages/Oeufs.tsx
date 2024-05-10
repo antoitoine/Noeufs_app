@@ -8,7 +8,7 @@ import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
 import { database, auth } from "../firebase";
 import { User, onAuthStateChanged } from "firebase/auth";
-import { onValue, ref, remove, set } from "firebase/database";
+import { get, onValue, ref, remove, set } from "firebase/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -83,6 +83,41 @@ export default function Oeufs({route, navigation}: Props) {
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
+                console.log(user.uid)
+
+                console.log('Synchronisation des données...')
+                try {
+                    AsyncStorage.getItem('oeufsStorage').then(async(value) => {
+                        const localData = value !== null ? JSON.parse(value) : {}
+
+                        get(ref(database, 'users/' + user.uid + '/oeufs')).then((snapshot) => {
+
+                            const onlineData = snapshot.val() !== null ? snapshot.val() : {}
+
+                            var mergedData = {}
+
+                            const keys = [...new Set([...Object.keys(onlineData), ...Object.keys(localData)])]
+                            console.log(keys)
+
+                            for (var i of keys) {
+                                mergedData = {
+                                    ...mergedData,
+                                    [i]: {
+                                        ...onlineData[i],
+                                        ...localData[i]
+                                    }
+                                }
+                            }
+
+                            set(ref(database, '/users/' + user.uid + '/oeufs'), mergedData)
+                        }).catch((error) => {
+                            console.error(error)
+                        })
+                    })
+                } catch(e) {
+                    console.error(e)
+                }
+
                 setUser(user)
             } else {
                 setUser(undefined)                                                     // Déconnexion
@@ -110,8 +145,6 @@ export default function Oeufs({route, navigation}: Props) {
                     nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
                     setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
                 }
-                
-                
             })
         } else {
             console.log('Pas d\'utilisateur connecté')
@@ -363,9 +396,8 @@ export default function Oeufs({route, navigation}: Props) {
                 onPress={() => {
                     if (user) {
                         remove(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
-                    } else {
-                        removeDayData()
                     }
+                    removeDayData()
                 }}
             />
 
@@ -381,12 +413,10 @@ export default function Oeufs({route, navigation}: Props) {
                     if (!Number.isNaN(nbOeufsInput.current)) {
                         if (user) {
                             set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                                nbOeufs: nbOeufsInput.current
+                                nbOeufs: nbOeufsInput.current?.toString()
                             })
-                        } else {
-                            if (nbOeufsInput.current !== null)
-                                setData(nbOeufsInput.current.toString())
                         }
+                        setData(nbOeufsInput.current!.toString())
                     } else {
                         console.log('Nombre entré incorrect')
                     }
@@ -416,11 +446,10 @@ export default function Oeufs({route, navigation}: Props) {
                 onPress={() => {
                     if (user) {
                         set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                            nbOeufs: -1
+                            nbOeufs: "-1"
                         })
-                    } else {
-                        setData("-1")
                     }
+                    setData("-1")
                 }}
             />
 
@@ -465,11 +494,12 @@ function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: 
                 text.current = ''                 // Sinon, enregistre la précédente valeur même en changeant de jour
             }}
             onChangeText={(t) => {
-                text.current = t
+                text.current = parseInt(t).toString()
                 onSubmit(parseInt(text.current))
             }}
             onStartShouldSetResponder={(event) => true}
             onTouchStart={(event) => event.stopPropagation()}
+            maxLength={3}
         />
     )
 }
@@ -537,7 +567,7 @@ const styles = StyleSheet.create({
         height: Dim.heightScale(100),
         display: 'flex',
         flex: 1,
-        backgroundColor: 'white'
+        backgroundColor: '#EFEFEF'
     },
     affichageOeufs: {
         position: 'absolute',

@@ -8,12 +8,20 @@ import { auth } from '../firebase';
 import { TextInput } from "react-native-gesture-handler";
 import * as Couleur from '../Utils/Couleurs'
 import { idJour, nbJours } from "./Oeufs";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import LinearGradient from "react-native-linear-gradient";
 
 const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
 const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
 const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
 const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, couleur_fin_hex.b] : [0, 0, 0];
 const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nbJours)
+
+const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C'); // Foncées
+const couleur_fin_hex2 = Couleur.hexToRgb('#7651FF');
+const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
+const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
+const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nbJours)
 
 type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
 
@@ -133,18 +141,18 @@ export default function Parametres({route, navigation}: Props) {
 
                 </TouchableOpacity>
 
-                <View style={[styles.page, {backgroundColor: Couleur.getRGBColorFromGradient(gradient, nbJours - idJour - 1)}]}>
+                <View style={[styles.page]}>
                     <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
                         navigation.goBack();
                     }}>
-                        <Text style={styles.retourTexte}>Retour</Text>
+                        <Text style={[styles.retourTexte, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>Retour</Text>
                     </TouchableOpacity>
 
                     { /* Page de connexion */}
 
                     <View style={styles.connexion}>
 
-                        <Text style={styles.connexionTitle}>Connexion</Text>
+                        <Text style={[styles.connexionTitle, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>Connexion</Text>
 
                         <InputField
                             title="Adresse email"
@@ -153,6 +161,7 @@ export default function Parametres({route, navigation}: Props) {
                             }}
                             footer={warnMessages.email}
                             footerColor='red'
+                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
                         />
 
                         <InputField
@@ -161,6 +170,7 @@ export default function Parametres({route, navigation}: Props) {
                                 name.current = text
                             }}
                             visible={inscription}
+                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
                         />
 
                         <InputField
@@ -171,6 +181,7 @@ export default function Parametres({route, navigation}: Props) {
                             }}
                             footer={warnMessages.password}
                             footerColor='red'
+                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
                         />
 
                         {/* Connexion à un utilisateur existant */}
@@ -186,7 +197,7 @@ export default function Parametres({route, navigation}: Props) {
                                 else connectUser()
                             }}
                         >
-                            <Text style={styles.connexionButtonText}>{inscription ? 'S\'inscrire' : 'Se connecter'}</Text>
+                            <Text style={[styles.connexionButtonText, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>{inscription ? 'S\'inscrire' : 'Se connecter'}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -201,7 +212,7 @@ export default function Parametres({route, navigation}: Props) {
             }}>
 
             </TouchableOpacity>
-            <View style={[styles.page, {backgroundColor: Couleur.getRGBColorFromGradient(gradient, nbJours - idJour - 1)}]}>
+            <View style={[styles.page]}>
                 <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
                     navigation.goBack();
                 }}>
@@ -209,12 +220,25 @@ export default function Parametres({route, navigation}: Props) {
                 </TouchableOpacity>
 
                 <Text style={styles.displayName}>{user.displayName}</Text>
+
+                <LinearGradient
+                    colors={['#FF4C4C', '#7651FF']}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
+                    style={{width: 100, height: 100, borderRadius: 10}}
+                />
+
                 <TouchableOpacity
                     style={deconnexionStyle.button}
                     onPress={() => {
                         console.log('Déconnexion...')
                         signOut(auth).then(() => {
                             console.log('Utilisateur déconnecté.')
+                            try {
+                                AsyncStorage.removeItem('oeufsStorage')
+                            } catch(e) {
+                                console.error(e)
+                            }
                         }).catch((error) => {
                             console.error('ERREUR : ' + error)
                         })
@@ -227,7 +251,7 @@ export default function Parametres({route, navigation}: Props) {
     )
 }
 
-function InputField({title, password=false, onSubmit, footer='', footerColor='black', visible=true}: {title: string, password?: Boolean, onSubmit: Function, footer?: string, footerColor?: string, visible?: Boolean}) {
+function InputField({title, password=false, onSubmit, footer='', footerColor='black', visible=true, titleColor='grey'}: {title: string, password?: Boolean, onSubmit: Function, footer?: string, footerColor?: string, visible?: Boolean, titleColor?: string}) {
 
     const text = useRef("")
 
@@ -237,7 +261,7 @@ function InputField({title, password=false, onSubmit, footer='', footerColor='bl
     return (
         <View>
             <View style={styles.fieldWrapper}>
-                <Text style={styles.textField}>
+                <Text style={[styles.textField, {color: titleColor}]}>
                     {title}
                 </Text>
                 <TextInput
@@ -273,7 +297,7 @@ const deconnexionStyle = StyleSheet.create({
         textAlignVertical: 'center',
         fontSize: Dim.scale(4),
 
-        color: 'white',
+        color: 'black',
         fontWeight: 'bold',
         textShadowRadius: 5
     }
@@ -296,7 +320,7 @@ const styles = StyleSheet.create({
         left: 0,
         height: Dim.heightScale(95),
         width: Dim.widthScale(100),
-        backgroundColor: "#C8B9FC",
+        backgroundColor: "#F5F5F5",
         borderTopRightRadius: Dim.scale(5),
         borderTopLeftRadius: Dim.scale(5),
     },
@@ -323,7 +347,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'left',
         textAlignVertical: 'center',
-        color: 'white',
+        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
         fontSize: Dim.scale(4),
         textShadowRadius: 5
     },
@@ -346,7 +370,7 @@ const styles = StyleSheet.create({
     },
     connexionTitle: {
         fontSize: Dim.scale(6),
-        color: 'white',
+        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
         textAlign: 'center',
         fontWeight: 'bold',
         textShadowRadius: 10
@@ -358,7 +382,7 @@ const styles = StyleSheet.create({
     },
     textField: {
         textAlign: 'center',
-        color: 'grey',
+        color: Couleur.getRGBColorFromGradient(gradient, idJour),
         fontSize: Dim.scale(3)
     },
 
@@ -375,7 +399,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(5),
-        color: 'black',
+        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
     },
     
     displayName: {
@@ -384,7 +408,7 @@ const styles = StyleSheet.create({
         width: Dim.widthScale(100),
         position: 'absolute',
         top: Dim.heightScale(5),
-        color: 'white',
+        color: 'black',
         fontSize: Dim.scale(6),
         textShadowRadius: 10,
         fontWeight: 'bold'
