@@ -10,18 +10,10 @@ import * as Couleur from '../Utils/Couleurs'
 import { idJour, nbJours } from "./Oeufs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
+import { DEGRADES } from "../Constantes/Couleurs";
 
-const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
-const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
-const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
-const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, couleur_fin_hex.b] : [0, 0, 0];
-const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nbJours)
-
-const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C'); // Foncées
-const couleur_fin_hex2 = Couleur.hexToRgb('#7651FF');
-const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
-const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
-const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nbJours)
+const gradient = Couleur.degradeCouleur(DEGRADES['c1'][0], DEGRADES['c1'][1], nbJours)
+const gradient2 = Couleur.degradeCouleur(DEGRADES['c1'][2], DEGRADES['c1'][3], nbJours)
 
 type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
 
@@ -214,19 +206,22 @@ export default function Parametres({route, navigation}: Props) {
             </TouchableOpacity>
             <View style={[styles.page]}>
                 <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
-                    navigation.goBack();
+                    navigation.navigate('Oeufs');
                 }}>
                     <Text style={styles.retourTexte}>Retour</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.displayName}>{user.displayName}</Text>
 
-                <LinearGradient
-                    colors={['#FF4C4C', '#7651FF']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={{width: 100, height: 100, borderRadius: 10}}
-                />
+                <TouchableOpacity
+                    style={{position: 'absolute', bottom: 500}}
+                    onPress={() => {
+                        navigation.goBack()
+                        navigation.navigate('Personnalisation')
+                    }}
+                >
+                    <Text>Afficher</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                     style={deconnexionStyle.button}

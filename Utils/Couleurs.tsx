@@ -37,10 +37,12 @@ function degradeTableau(bornes: Array<number>, N: number) {
  * -------
  * gradient : [r, g, b] -> gradient[0][1] est la 2e valeur du rouge, gradient[2, 5] la 6e du bleu 
  */
-function degradeCouleur(rgbDebut: Array<number>, rgbFin: Array<number>, N: number): Array<Array<number>> {
-    const r = degradeTableau([rgbDebut[0], rgbFin[0]], N);
-    const g = degradeTableau([rgbDebut[1], rgbFin[1]], N);
-    const b = degradeTableau([rgbDebut[2], rgbFin[2]], N);
+function degradeCouleur(hexDebut: string, hexFin: string, N: number): Array<Array<number>> {
+    const rgbDebut = hexToRgb(hexDebut)
+    const rgbFin = hexToRgb(hexFin)
+    const r = degradeTableau([rgbDebut.r, rgbFin.r], N);
+    const g = degradeTableau([rgbDebut.g, rgbFin.g], N);
+    const b = degradeTableau([rgbDebut.b, rgbFin.b], N);
 
     return [r, g, b]
 }
@@ -51,7 +53,11 @@ function hexToRgb(hex: string) {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
-    } : null;
+    } : {
+        r: 0,
+        g: 0,
+        b: 0
+    };
   }
 
 

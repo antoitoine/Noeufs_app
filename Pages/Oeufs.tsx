@@ -1,8 +1,8 @@
 import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, Alert, KeyboardAvoidingView, Keyboard } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
-import { useEffect, useRef, useState } from "react";
-import { StackParamList } from "../App";
+import { useContext, useEffect, useRef, useState } from "react";
+import { StackParamList, ThemeContext } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
@@ -11,12 +11,13 @@ import { User, onAuthStateChanged } from "firebase/auth";
 import { get, onValue, ref, remove, set } from "firebase/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 
 // Paramètres
 
 const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
-const taille_disque = Dim.scale(5.5);
+const taille_disque = Dim.scale(6);
 
 const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
 const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
@@ -55,14 +56,27 @@ export default function Oeufs({route, navigation}: Props) {
 
     const translation = useRef(new Animated.Value(0)).current;
     const nb_disques = JOURS_MOIS[moisReel]
-    const gradient = Couleur.degradeCouleur(couleur_debut, couleur_fin, nb_disques);
-    const gradient2 = Couleur.degradeCouleur(couleur_debut2, couleur_fin2, nb_disques);
 
     idJour = jourSelectionne
     nbJours = nb_disques
 
+    /* Preferences */
+
+    const theme = useContext(ThemeContext)!
+    const [backgroundColor, setBackgroundColor] = theme.backgroundColor
+    console.log('Theme : ' + backgroundColor)
+
     useEffect(() => {
-        navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}, headerTitleStyle: {color: 'white', fontWeight: 'bold', fontSize: Dim.scale(6)}, headerTitleAlign: 'center'})
+        if (jourSelectionne != 0) setJourSelectionne(0);
+    }, [backgroundColor]);
+
+    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nb_disques)
+    const gradient2 = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nb_disques)
+
+    /* Header */
+
+    useEffect(() => {
+        navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}})
     }, [jourSelectionne])
 
     /* Insets */
@@ -567,7 +581,7 @@ const styles = StyleSheet.create({
         height: Dim.heightScale(100),
         display: 'flex',
         flex: 1,
-        backgroundColor: '#EFEFEF'
+        backgroundColor: FAKE_WHITE
     },
     affichageOeufs: {
         position: 'absolute',
