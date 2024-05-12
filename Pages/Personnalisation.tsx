@@ -105,11 +105,11 @@ function ChoixCouleur({id, onPress, style=undefined}: {id: number, onPress: Func
 
 const choixCouleurStyle = StyleSheet.create({
     button: {
-        flexBasis: 100,
+        flexBasis: Dim.widthScale(20),
         flex: 1,
         flexGrow: 1,
         borderRadius: Dim.scale(1),
-        margin: Dim.scale(2),
+        margin: Dim.scale(3),
         aspectRatio: 1,
         display: 'flex',
         justifyContent: 'center',
@@ -123,7 +123,7 @@ const pageStyle = StyleSheet.create({
         flex: 1,
     },
     container: {
-        padding: Dim.scale(1),
+        padding: Dim.scale(3),
         flexWrap: 'wrap',
         flexDirection: 'row'
     }

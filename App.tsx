@@ -9,39 +9,52 @@ import { EdgeInsets, SafeAreaProvider, useSafeAreaInsets } from "react-native-sa
 import { Background, HeaderButtonProps, getDefaultHeaderHeight } from "@react-navigation/elements";
 import Personnalisation from "./Pages/Personnalisation";
 import { createContext, useContext, useEffect, useState } from "react";
-import { hexToRgb, getRGBColorFromGradient } from "./Utils/Couleurs";
+import { hexToRgb, getRGBColorFromGradient, degradeCouleur } from "./Utils/Couleurs";
 import { DEGRADES } from "./Constantes/Couleurs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Compte from "./Pages/Compte";
+import { User, onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
 
 export type StackParamList = {
     Oeufs: undefined,
     Parametres: undefined,
-    Personnalisation: undefined
+    Personnalisation: undefined,
+    Compte: undefined
 }
 
 type themeContextType = {
     backgroundColor: [backgroundColor: string, setBackgroundColor: Function]
+    idJour: [idJour: number, setIdJour: Function]
+    nbJours: [nbJours: number, setNbJours: Function]
+}
+
+type authContextType = {
+    user: [user: User | null, setUser: Function]
 }
 
 export const ThemeContext = createContext<themeContextType | null>(null)
+export const AuthContext = createContext<authContextType | null>(null)
 
 const Stack = createNativeStackNavigator<StackParamList>()
-
-function test() {
-    return (
-        <View></View>
-    )
-}
 
 /**
  * Point d'entrée de l'application mobile
  */
 export default function App() {
 
-    const [theme, setTheme] = useState({backgroundColor: 'c1'})
+    /* Theme context */
+
+    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31})
 
     function setBackgroundColor(bg: string) {
-        setTheme({backgroundColor: bg})
+        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours})
+    }
+    function setIdJour(j: number) {
+        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours})
+    }
+    function setNbJours(n: number) {
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n})
     }
 
     useEffect(() => {
@@ -52,9 +65,35 @@ export default function App() {
         })
     }, [])
 
+    /* Auth context */
+
+    const [authContext, setAuthContext] = useState<{user: User | null}>({user: null})
+
+    function setUser(u: User | null) {
+        setAuthContext({user: u})
+    }
+
+    useEffect(() => {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User connected : ' + user.email + ' ' + user.displayName)
+                setUser(user)
+            } else {
+                setUser(null)
+            }
+        })
+    }, [])
+
     return (
         <SafeAreaProvider>
-        <ThemeContext.Provider value={{backgroundColor: [theme.backgroundColor, setBackgroundColor]}}>
+        <AuthContext.Provider value={{
+            user: [authContext.user, setUser]
+        }}>
+        <ThemeContext.Provider value={{
+            backgroundColor: [theme.backgroundColor, setBackgroundColor],
+            idJour: [theme.idJour, setIdJour],
+            nbJours: [theme.nbJours, setNbJours]
+        }}>
         <GestureHandlerRootView>
             <NavigationContainer>
                 <Stack.Navigator initialRouteName="Oeufs" screenOptions={{gestureEnabled: true}}>
@@ -79,7 +118,7 @@ export default function App() {
 
                             return (
                                 <TouchableOpacity style={[styles.backWrapper]} onPress={() => {
-                                    navigation.navigate('Oeufs')
+                                    navigation.pop()
                                 }}>
                                     <Image source={require('./Images/backButton.png')} style={[styles.back, {top: insets.top}]} />
                                 </TouchableOpacity>
@@ -91,13 +130,18 @@ export default function App() {
                             const headerHeight = Dim.heightScale(7) + insets.top
 
                             const theme = useContext(ThemeContext)!
-                            const [backgroundColor, setBackgroundColor] = theme.backgroundColor
+                            const [backgroundColor, ] = theme.backgroundColor
+                            const [idJour, ] = theme.idJour
+                            const [nbJours, ] = theme.nbJours
+
+                            const gradient = degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
+                            const color = getRGBColorFromGradient(gradient, idJour)
 
                             const rightButton = props.options.headerRight ? props.options.headerRight({canGoBack: true}) : null
                             const leftButton = props.options.headerLeft ? props.options.headerLeft({canGoBack: true}) : null
 
                             return (
-                                <View style={[styles.header, props.options.headerStyle, {paddingTop: insets.top, height: headerHeight, backgroundColor: DEGRADES[backgroundColor][2]}]}>
+                                <View style={[styles.header, props.options.headerStyle, {paddingTop: insets.top, height: headerHeight, backgroundColor: color}]}>
                                     
                                     {props.options.headerBackVisible ? leftButton : null}
 
@@ -127,11 +171,17 @@ export default function App() {
                             component={Parametres}
                             options={{headerBackVisible: true, headerRight: undefined, title: 'Paramètres'}}
                         />
+                        <Stack.Screen
+                            name="Compte"
+                            component={Compte}
+                            options={{headerBackVisible: true, headerRight: undefined, title: authContext.user ? 'Mon compte' : 'Connexion'}}
+                        />
                     </Stack.Group>
                 </Stack.Navigator>
             </NavigationContainer>
         </GestureHandlerRootView>
         </ThemeContext.Provider>
+        </AuthContext.Provider>
         </SafeAreaProvider>
     )
 }

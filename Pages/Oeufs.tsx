@@ -2,7 +2,7 @@ import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Ani
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useContext, useEffect, useRef, useState } from "react";
-import { StackParamList, ThemeContext } from "../App";
+import { AuthContext, StackParamList, ThemeContext } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
@@ -31,9 +31,6 @@ const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, cou
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
-export var idJour = 0
-export var nbJours = 31
-
 type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
 /**
@@ -57,27 +54,23 @@ export default function Oeufs({route, navigation}: Props) {
     const translation = useRef(new Animated.Value(0)).current;
     const nb_disques = JOURS_MOIS[moisReel]
 
-    idJour = jourSelectionne
-    nbJours = nb_disques
-
     /* Preferences */
 
     const theme = useContext(ThemeContext)!
     const [backgroundColor, setBackgroundColor] = theme.backgroundColor
-    console.log('Theme : ' + backgroundColor)
+    const [idJourTheme, setIdJourTheme] = theme.idJour
+    const [nbJoursTheme, setNbJoursTheme] = theme.nbJours
 
     useEffect(() => {
-        if (jourSelectionne != 0) setJourSelectionne(0);
-    }, [backgroundColor]);
+        setIdJourTheme(jourSelectionne)
+    }, [jourSelectionne])
+
+    useEffect(() => {
+        setNbJoursTheme(nb_disques)
+    }, [moisSelectionne])
 
     const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nb_disques)
     const gradient2 = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nb_disques)
-
-    /* Header */
-
-    useEffect(() => {
-        navigation.setOptions({headerStyle: {backgroundColor: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}})
-    }, [jourSelectionne])
 
     /* Insets */
 
@@ -86,7 +79,8 @@ export default function Oeufs({route, navigation}: Props) {
 
     /* Database & Auth */
 
-    const [user, setUser] = useState<User | undefined>(undefined)
+    const authContext = useContext(AuthContext)!
+    const [user, ] = authContext.user
 
     const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(nb_disques))
     const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(nb_disques))
@@ -94,50 +88,51 @@ export default function Oeufs({route, navigation}: Props) {
     const nbOeufsInput = useRef<number | null>(null)
 
     useEffect(() => { // Connexion à un utilisateur
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
-                console.log(user.uid)
+        if (user) {
+            console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
+            console.log(user.uid)
 
-                console.log('Synchronisation des données...')
-                try {
-                    AsyncStorage.getItem('oeufsStorage').then(async(value) => {
-                        const localData = value !== null ? JSON.parse(value) : {}
+            console.log('Synchronisation des données...')
+            try {
+                AsyncStorage.getItem('oeufsStorage').then(async(value) => {
+                    const localData = value !== null ? JSON.parse(value) : {}
 
-                        get(ref(database, 'users/' + user.uid + '/oeufs')).then((snapshot) => {
+                    get(ref(database, 'users/' + user.uid + '/oeufs')).then((snapshot) => {
 
-                            const onlineData = snapshot.val() !== null ? snapshot.val() : {}
+                        const onlineData = snapshot.val() !== null ? snapshot.val() : {}
 
-                            var mergedData = {}
+                        var mergedData = {}
 
-                            const keys = [...new Set([...Object.keys(onlineData), ...Object.keys(localData)])]
-                            console.log(keys)
+                        const keys = [...new Set([...Object.keys(onlineData), ...Object.keys(localData)])]
+                        console.log(keys)
 
-                            for (var i of keys) {
-                                mergedData = {
-                                    ...mergedData,
-                                    [i]: {
-                                        ...onlineData[i],
-                                        ...localData[i]
-                                    }
+                        for (var i of keys) {
+                            mergedData = {
+                                ...mergedData,
+                                [i]: {
+                                    ...onlineData[i],
+                                    ...localData[i]
                                 }
                             }
+                        }
 
-                            set(ref(database, '/users/' + user.uid + '/oeufs'), mergedData)
-                        }).catch((error) => {
-                            console.error(error)
-                        })
+                        set(ref(database, '/users/' + user.uid + '/oeufs'), mergedData)
+                    }).catch((error) => {
+                        console.error(error)
                     })
-                } catch(e) {
-                    console.error(e)
-                }
-
-                setUser(user)
-            } else {
-                setUser(undefined)                                                     // Déconnexion
+                })
+            } catch(e) {
+                console.error(e)
             }
-        })
-    }, [])
+        } else {
+            console.log('Déconnecté')                                                    // Déconnexion
+            try {
+                AsyncStorage.removeItem('oeufsStorage')
+            } catch(e) {
+                console.error(e)
+            }
+        }
+    }, [user])
     
     useEffect(() => { // Récupération des données du mois
         if (user) {

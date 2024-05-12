@@ -1,282 +1,94 @@
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
-import { StackParamList } from "../App";
+import { AuthContext, StackParamList, ThemeContext } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { auth } from '../firebase';
 import { TextInput } from "react-native-gesture-handler";
 import * as Couleur from '../Utils/Couleurs'
-import { idJour, nbJours } from "./Oeufs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
-import { DEGRADES } from "../Constantes/Couleurs";
-
-const gradient = Couleur.degradeCouleur(DEGRADES['c1'][0], DEGRADES['c1'][1], nbJours)
-const gradient2 = Couleur.degradeCouleur(DEGRADES['c1'][2], DEGRADES['c1'][3], nbJours)
+import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 
 type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
 
 export default function Parametres({route, navigation}: Props) {
 
-    const [user, setUser] = useState<User>()
+    const theme = useContext(ThemeContext)!
+    const [backgroundColor, ] = theme.backgroundColor
+    const [idJour, ] = theme.idJour
+    const [nbJours, ] = theme.nbJours
 
-    const [warnMessages, setWarnMessages] = useState({email: '', password: ''})
-    const [inscription, setInscription] = useState(false)
+    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
+    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, idJour)
 
-    const email = useRef("");
-    const password = useRef("");
-    const name = useRef("");
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('User connected : ' + user.email + ' ' + user.displayName)
-                setUser(user)
-            } else {
-                setUser(undefined)
-            }
-        })
-    }, [])
-    
-
-    function createNewUser() {
-        console.log('Création d\'un nouveau compte...')
-        createUserWithEmailAndPassword(auth, email.current, password.current).then((userCredential) => {
-            const u = userCredential.user;
-            console.log('User created : ' + u.email);
-            updateProfile(u, {
-                displayName: name.current
-            }).then(() => {
-                console.log('Name updated !')
-                setUser(u)
-            }).catch((error) => {
-                console.error('ERREUR : ' + error.code + ' ' + error.message)
-            })
-        }).catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-    
-            console.log('INSCRIPTION : ' + errorCode + ' ' + errorMessage);
-        })
-    }
-
-    function connectUser() {
-        signInWithEmailAndPassword(auth, email.current, password.current).then((userCredential) => {
-            const u = userCredential.user;
-            console.log('User signed in : ' + u.email);
-            setUser(u)
-        }).catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-
-            console.log('CONNEXION FAILED : ' + errorCode + ' ' + errorMessage);
-
-            switch(errorCode) {
-                case 'auth/user-not-found':
-                    alertCreateNewAccount()
-                    return
-                case 'auth/wrong-password':
-                    console.log('WRONG PASSWORD')
-                    setWarnMessages({email: '', password: 'Mot de passe incorrect'})
-                    return
-                case 'auth/invalid-email':
-                    console.log('INVALID EMAIL')
-                    setWarnMessages({email: 'Adresse email invalide', password: ''})
-                    return
-                case 'auth/too-many-requests':
-                    Alert.alert('Trop de tentatives\nRéessayez plus tard.')
-                    return
-                default:
-                    return
-            }
-        })
-    }
-
-    /* Boite de dialogue : créer un nouveau compte */
-
-    function alertCreateNewAccount() {
-        Alert.alert(
-            '',
-            'Aucun compte n\'est associé à cet email, souhaitez-vous en créer un ?',
-            [
-                {
-                    text: 'Non',
-                    onPress: () => {
-
-                    },
-                    style: 'cancel'
-                },
-                {
-                    text: 'Oui',
-                    onPress: () => {
-                        setInscription(true)
-                    },
-                    style: 'default'
-                }
-            ],
-            {
-                cancelable: true,
-                onDismiss: () => {
-                    
-                }
-            }
-        )
-    }
-
-    if (!user) { // Utilisateur déconnecté
-        return (
-            <View style={styles.wrapper}>
-                <TouchableOpacity style={styles.invisible} activeOpacity={1} onPress={() => {
-                    navigation.goBack();
-                }}>
-
-                </TouchableOpacity>
-
-                <View style={[styles.page]}>
-                    <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
-                        navigation.goBack();
-                    }}>
-                        <Text style={[styles.retourTexte, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>Retour</Text>
-                    </TouchableOpacity>
-
-                    { /* Page de connexion */}
-
-                    <View style={styles.connexion}>
-
-                        <Text style={[styles.connexionTitle, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>Connexion</Text>
-
-                        <InputField
-                            title="Adresse email"
-                            onSubmit={(text: string) => {
-                                email.current = text
-                            }}
-                            footer={warnMessages.email}
-                            footerColor='red'
-                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
-                        />
-
-                        <InputField
-                            title="Pseudo"
-                            onSubmit={(text: string) => {
-                                name.current = text
-                            }}
-                            visible={inscription}
-                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
-                        />
-
-                        <InputField
-                            title="Mot de passe"
-                            password={true}
-                            onSubmit={(text: string) => {
-                                password.current = text
-                            }}
-                            footer={warnMessages.password}
-                            footerColor='red'
-                            titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
-                        />
-
-                        {/* Connexion à un utilisateur existant */}
-
-                        <TouchableOpacity
-                            style={styles.connexionButton}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                                console.log('Adresse mail : ' + email.current)
-                                console.log('Mot de passe : ' + password.current)
-
-                                if (inscription) createNewUser()
-                                else connectUser()
-                            }}
-                        >
-                            <Text style={[styles.connexionButtonText, {color: Couleur.getRGBColorFromGradient(gradient2, idJour)}]}>{inscription ? 'S\'inscrire' : 'Se connecter'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        )
-    }
-
-    return ( // Utilisateur connecté
-        <View style={styles.wrapper}>
-            <TouchableOpacity style={styles.invisible} activeOpacity={1} onPress={() => {
-                navigation.goBack();
-            }}>
-
-            </TouchableOpacity>
-            <View style={[styles.page]}>
-                <TouchableOpacity style={styles.retourWrapper} activeOpacity={0.8} onPress={() => {
-                    navigation.navigate('Oeufs');
-                }}>
-                    <Text style={styles.retourTexte}>Retour</Text>
-                </TouchableOpacity>
-
-                <Text style={styles.displayName}>{user.displayName}</Text>
-
-                <TouchableOpacity
-                    style={{position: 'absolute', bottom: 500}}
-                    onPress={() => {
-                        navigation.goBack()
-                        navigation.navigate('Personnalisation')
-                    }}
-                >
-                    <Text>Afficher</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={deconnexionStyle.button}
-                    onPress={() => {
-                        console.log('Déconnexion...')
-                        signOut(auth).then(() => {
-                            console.log('Utilisateur déconnecté.')
-                            try {
-                                AsyncStorage.removeItem('oeufsStorage')
-                            } catch(e) {
-                                console.error(e)
-                            }
-                        }).catch((error) => {
-                            console.error('ERREUR : ' + error)
-                        })
-                    }}
-                >
-                    <Text style={deconnexionStyle.text}>Se déconnecter</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    )
-}
-
-function InputField({title, password=false, onSubmit, footer='', footerColor='black', visible=true, titleColor='grey'}: {title: string, password?: Boolean, onSubmit: Function, footer?: string, footerColor?: string, visible?: Boolean, titleColor?: string}) {
-
-    const text = useRef("")
-
-    if (!visible)
-        return null
+    const authContext = useContext(AuthContext)!
+    const [user, ] = authContext.user
 
     return (
-        <View>
-            <View style={styles.fieldWrapper}>
-                <Text style={[styles.textField, {color: titleColor}]}>
-                    {title}
-                </Text>
-                <TextInput
-                    style={styles.inputField}
-                    secureTextEntry={password ? true : false}
-                    onChangeText={(t: string) => {
-                        text.current = t
-                    }}
-                    onBlur={() => {
-                        onSubmit(text.current);
-                    }}
-                    returnKeyType="done"
-                    keyboardType={password ? "default" : "email-address"}
-                    autoCapitalize="none"
-                />
-            </View>
-            <Text style={[inputStyle.footer, {color: footerColor}]}>{footer}</Text>
+        <View style={styles.wrapper}>
+            <Section
+                title={user ? 'Mon compte' : 'Compte'}
+                onPress={() => {
+                    navigation.navigate('Compte')
+                }}
+                color={interactiveColor}
+            />
+            <Section
+                title='Personnalisation'
+                onPress={() => {
+                    navigation.navigate('Personnalisation')
+                }}
+                color={interactiveColor}
+            />
         </View>
     )
 }
+
+type SectionType = {
+    title: string
+    onPress: Function
+    color: string
+}
+
+function Section({title, onPress, color}: SectionType) {
+    return (
+        <TouchableOpacity
+            style={sectionStyles.wrapper}
+            activeOpacity={0.7}
+            onPress={() => {
+                onPress()
+            }}
+        >
+            <Text style={[sectionStyles.title, {color: color}]}>{title}</Text>
+        </TouchableOpacity>
+    )
+}
+
+const sectionStyles = StyleSheet.create({
+    wrapper: {
+        width: Dim.widthScale(90),
+        height: Dim.heightScale(8),
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: Dim.heightScale(1),
+        marginBottom: Dim.heightScale(1),
+
+        borderRadius: Dim.scale(1),
+        backgroundColor: 'white'
+    },
+    title: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+
+        color: 'black',
+        fontSize: Dim.scale(5),
+        fontWeight: 'bold'
+    }
+})
 
 const deconnexionStyle = StyleSheet.create({
     button: {
@@ -307,7 +119,15 @@ const inputStyle = StyleSheet.create({
 
 const styles = StyleSheet.create({
     wrapper: {
-        flex: 1
+        display: 'flex',
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+
+        paddingTop: Dim.heightScale(1),
+
+        backgroundColor: FAKE_WHITE
     },
     page: {
         position: 'relative',
@@ -342,7 +162,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'left',
         textAlignVertical: 'center',
-        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
+        color: 'black',
         fontSize: Dim.scale(4),
         textShadowRadius: 5
     },
@@ -365,7 +185,7 @@ const styles = StyleSheet.create({
     },
     connexionTitle: {
         fontSize: Dim.scale(6),
-        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
+        color: 'black',
         textAlign: 'center',
         fontWeight: 'bold',
         textShadowRadius: 10
@@ -377,7 +197,7 @@ const styles = StyleSheet.create({
     },
     textField: {
         textAlign: 'center',
-        color: Couleur.getRGBColorFromGradient(gradient, idJour),
+        color: 'black',
         fontSize: Dim.scale(3)
     },
 
@@ -394,7 +214,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(5),
-        color: Couleur.getRGBColorFromGradient(gradient2, idJour),
+        color: 'black',
     },
     
     displayName: {
