@@ -47,6 +47,8 @@ export default function Oeufs({route, navigation}: Props) {
     const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
     const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+    console.log(DEGRADES)
+
     useEffect(() => {
         if (jourSelectionne != 0) setJourSelectionne(0);
     }, [moisSelectionne]);
@@ -88,7 +90,8 @@ export default function Oeufs({route, navigation}: Props) {
     const nbOeufsInput = useRef<number | null>(null)
 
     useEffect(() => { // Connexion à un utilisateur
-        if (user) {
+        if (user !== null) {
+            console.log(user)
             console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
             console.log(user.uid)
 
@@ -118,7 +121,7 @@ export default function Oeufs({route, navigation}: Props) {
 
                         set(ref(database, '/users/' + user.uid + '/oeufs'), mergedData)
                     }).catch((error) => {
-                        console.error(error)
+                        console.error('FIREBASE ERROR : ' + error)
                     })
                 })
             } catch(e) {
@@ -135,8 +138,8 @@ export default function Oeufs({route, navigation}: Props) {
     }, [user])
     
     useEffect(() => { // Récupération des données du mois
-        if (user) {
-            onValue(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
+        if (user !== null) {
+            return onValue(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
                 const data = snapshot.val()
                 console.log('Récupération des données')
                 if (data) {
@@ -154,6 +157,8 @@ export default function Oeufs({route, navigation}: Props) {
                     nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
                     setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
                 }
+            }, (error) => {
+                console.error(error.message)
             })
         } else {
             console.log('Pas d\'utilisateur connecté')
@@ -286,7 +291,7 @@ export default function Oeufs({route, navigation}: Props) {
     else if (nbOeufs_jour <= 1)     nbOeufs_text = nbOeufs_jour + ' Oeuf'
     else                            nbOeufs_text = nbOeufs_jour + ' Oeufs'
 
-    function showDays(s : boolean, position: Animated.AnimatedInterpolation<string | number>) {
+    function showDays(position: Animated.AnimatedInterpolation<string | number>) {
         return (
             <Animated.View
                 style={{
@@ -294,7 +299,6 @@ export default function Oeufs({route, navigation}: Props) {
                     width: Dim.widthScale(100),
                     height: Dim.heightScale(100),
                     bottom: 0,
-                    borderWidth: s ? 3 : 0,
                     transform: [{translateX: position}],
                 }}
             >
@@ -372,19 +376,19 @@ export default function Oeufs({route, navigation}: Props) {
                 >
                     <Animated.View style={styles.defaultPosition}>
                         {
-                            showDays(false, translation.interpolate({
+                            showDays(translation.interpolate({
                                 inputRange: [-Dim.widthScale(100), Dim.widthScale(100)],
                                 outputRange: [-Dim.widthScale(100), Dim.widthScale(100)]
                             }))
                         }
                         {
-                            showDays(false, translation.interpolate({
+                            showDays(translation.interpolate({
                                 inputRange: [-Dim.widthScale(100), 0],
                                 outputRange: [0, Dim.widthScale(100)]
                             }))
                         }
                         {
-                            showDays(false, translation.interpolate({
+                            showDays(translation.interpolate({
                                 inputRange: [0, Dim.widthScale(100)],
                                 outputRange: [-Dim.widthScale(100), 0]
                             }))
@@ -422,7 +426,9 @@ export default function Oeufs({route, navigation}: Props) {
                     if (!Number.isNaN(nbOeufsInput.current)) {
                         if (user) {
                             set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                                nbOeufs: nbOeufsInput.current?.toString()
+                                nbOeufs: nbOeufsInput.current
+                            }).catch(error => {
+                                console.error('FIREBASE ERROR : set nb oeufs - ' + error)
                             })
                         }
                         setData(nbOeufsInput.current!.toString())
@@ -455,7 +461,7 @@ export default function Oeufs({route, navigation}: Props) {
                 onPress={() => {
                     if (user) {
                         set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                            nbOeufs: "-1"
+                            nbOeufs: -1
                         })
                     }
                     setData("-1")
@@ -464,33 +470,12 @@ export default function Oeufs({route, navigation}: Props) {
 
         </KeyboardAvoidingView>
     )
-
-    function alertConnexion() {
-        Alert.alert(
-            'Connexion requise',
-            'Connectez-vous pour enregistrer une récolte !',
-            [
-                {
-                    text: 'Se connecter',
-                    onPress: () => {
-                        navigation.navigate('Parametres')
-                    },
-                    style: 'default'
-                }
-            ],
-            {
-                cancelable: true,
-                onDismiss: () => {
-                    
-                }
-            }
-        )
-    }
 }
 
 function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string, onSubmit: Function}) {
     
     const text = useRef('')
+    const [textBlured, setTextBlured] = useState('')
     
     return (
         <TextInput
@@ -499,12 +484,13 @@ function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: 
             placeholder="0"
             placeholderTextColor={couleur2}
             onBlur={() => {
-                onSubmit(parseInt(text.current))
+                onSubmit(parseInt(textBlured))
                 text.current = ''                 // Sinon, enregistre la précédente valeur même en changeant de jour
+                setTextBlured('')
             }}
             onChangeText={(t) => {
-                text.current = parseInt(t).toString()
-                onSubmit(parseInt(text.current))
+                setTextBlured(parseInt(t).toString())
+                onSubmit(parseInt(textBlured))
             }}
             onStartShouldSetResponder={(event) => true}
             onTouchStart={(event) => event.stopPropagation()}
@@ -518,7 +504,7 @@ function Bouton({posx, posy, width, height, couleur, texte, onPress}: {posx: num
         <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.bouton, {left: posx, width: width, height: height, backgroundColor: couleur, bottom: posy}]}
-            onPress={(event) => {
+            onPress={() => {
                 onPress()
             }}
         >
@@ -549,7 +535,7 @@ function Jour({posx, posy, style, couleur, id, onPress, selected}: {posx: number
 const styles = StyleSheet.create({
     disqueJour: {
         position: 'absolute',
-        backgroundColor: 'blue'
+        backgroundColor: 'blue',
     },
     selected: {
         height: taille_disque / 2,

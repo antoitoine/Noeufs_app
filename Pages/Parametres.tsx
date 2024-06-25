@@ -28,17 +28,27 @@ export default function Parametres({route, navigation}: Props) {
 
     return (
         <View style={styles.wrapper}>
+            
             <Section
-                title={user ? 'Mon compte' : 'Compte'}
+                title='Animaux'
                 onPress={() => {
-                    navigation.navigate('Compte')
+                    navigation.navigate('Animaux')
                 }}
                 color={interactiveColor}
             />
+            
             <Section
                 title='Personnalisation'
                 onPress={() => {
                     navigation.navigate('Personnalisation')
+                }}
+                color={interactiveColor}
+            />
+            
+            <Section
+                title={user ? 'Mon compte' : 'Compte'}
+                onPress={() => {
+                    navigation.navigate('Compte')
                 }}
                 color={interactiveColor}
             />

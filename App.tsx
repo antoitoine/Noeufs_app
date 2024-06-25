@@ -15,12 +15,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Compte from "./Pages/Compte";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
+import Animaux from "./Pages/Animaux";
 
 export type StackParamList = {
     Oeufs: undefined,
     Parametres: undefined,
     Personnalisation: undefined,
-    Compte: undefined
+    Compte: undefined,
+    Animaux: undefined
 }
 
 type themeContextType = {
@@ -175,6 +177,11 @@ export default function App() {
                             name="Compte"
                             component={Compte}
                             options={{headerBackVisible: true, headerRight: undefined, title: authContext.user ? 'Mon compte' : 'Connexion'}}
+                        />
+                        <Stack.Screen
+                            name="Animaux"
+                            component={Animaux}
+                            options={{headerBackVisible: true, headerRight: undefined, title: 'Animaux'}}
                         />
                     </Stack.Group>
                 </Stack.Navigator>

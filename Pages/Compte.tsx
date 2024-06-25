@@ -134,7 +134,7 @@ export default function Compte({route, navigation}: Props) {
             <View style={[connectedStyles.wrapper, {paddingBottom: insets.bottom}]}>
                 <View style={connectedStyles.upperPart}>
                     <Text style={[connectedStyles.helloMessage, {color: interactiveColor}]}>
-                        Bonjour, {user.displayName} !
+                        Connecté en tant que {user.displayName} !
                     </Text>
                 </View>
                 <View style={connectedStyles.lowerPart}>
