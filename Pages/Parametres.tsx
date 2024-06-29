@@ -154,7 +154,6 @@ const styles = StyleSheet.create({
         top: Dim.scale(2),
         left: Dim.scale(5),
     },
-
     test: {
         backgroundColor: 'red'
     },

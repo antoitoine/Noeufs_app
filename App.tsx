@@ -33,6 +33,7 @@ type themeContextType = {
     backgroundColor: [backgroundColor: string, setBackgroundColor: Function]
     idJour: [idJour: number, setIdJour: Function]
     nbJours: [nbJours: number, setNbJours: Function]
+    headerHeight: [headerHeight: number, setHeaderHeight: Function]
 }
 
 type authContextType = {
@@ -51,16 +52,19 @@ export default function App() {
 
     /* Theme context */
 
-    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31})
+    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31, headerHeight: Dim.heightScale(7)})
 
     function setBackgroundColor(bg: string) {
-        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours})
+        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight})
     }
     function setIdJour(j: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours})
+        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours, headerHeight: theme.headerHeight})
     }
     function setNbJours(n: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n})
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n, headerHeight: theme.headerHeight})
+    }
+    function setHeaderHeight(h: number) {
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: h})
     }
 
     useEffect(() => {
@@ -98,7 +102,8 @@ export default function App() {
         <ThemeContext.Provider value={{
             backgroundColor: [theme.backgroundColor, setBackgroundColor],
             idJour: [theme.idJour, setIdJour],
-            nbJours: [theme.nbJours, setNbJours]
+            nbJours: [theme.nbJours, setNbJours],
+            headerHeight: [theme.headerHeight, setHeaderHeight]
         }}>
         <GestureHandlerRootView>
             <NavigationContainer>
@@ -133,12 +138,16 @@ export default function App() {
                         header: (props) => {
                             
                             const insets = useSafeAreaInsets()
-                            const headerHeight = Dim.heightScale(7) + insets.top
+                            const hHeight = Dim.heightScale(7) + insets.top
 
                             const theme = useContext(ThemeContext)!
                             const [backgroundColor, ] = theme.backgroundColor
                             const [idJour, ] = theme.idJour
                             const [nbJours, ] = theme.nbJours
+                            const [headerHeight, setHeaderHeight] = theme.headerHeight
+
+                            if (headerHeight !== hHeight)
+                                setHeaderHeight(hHeight)
 
                             const gradient = degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
                             const color = getRGBColorFromGradient(gradient, idJour)

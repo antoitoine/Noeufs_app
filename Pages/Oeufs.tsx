@@ -32,6 +32,8 @@ const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, cou
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
+const MODES_OEUFS = ['Poules', 'Cailles', 'Oies', 'Cannes']
+
 type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
 /**
@@ -63,12 +65,21 @@ export default function Oeufs({route, navigation}: Props) {
     const translation = useRef(new Animated.Value(0)).current;
     const nb_disques = JOURS_MOIS[moisReel]
 
+    /* Mode d'oeufs */
+
+    const [mode, setMode] = useState(0)
+
+    useEffect(() => {
+        navigation.setOptions({title: MODES_OEUFS[mode]})
+    }, [mode])
+
     /* Preferences */
 
     const theme = useContext(ThemeContext)!
     const [backgroundColor, setBackgroundColor] = theme.backgroundColor
     const [idJourTheme, setIdJourTheme] = theme.idJour
     const [nbJoursTheme, setNbJoursTheme] = theme.nbJours
+    const [headerHeight, setHeaderHeight] = theme.headerHeight
 
     useEffect(() => {
         setIdJourTheme(jourSelectionne)
@@ -80,6 +91,9 @@ export default function Oeufs({route, navigation}: Props) {
 
     const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nb_disques)
     const gradient2 = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nb_disques)
+
+    const interactiveLightColor = Couleur.getRGBColorFromGradient(gradient, jourSelectionne)
+    const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)
 
     /* Insets */
 
@@ -208,6 +222,8 @@ export default function Oeufs({route, navigation}: Props) {
             
         }
     }, [moisSelectionne, user])
+
+    console.log('HEADER HEIGHT : ' + headerHeight + ' ' + Dim.heightScale(7))
 
     /* Async storage */
 
@@ -343,7 +359,19 @@ export default function Oeufs({route, navigation}: Props) {
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
-
+            
+            <TouchableOpacity
+                style={[styles.mode, {zIndex: 1, bottom: Dim.heightScale(100) - headerHeight - Dim.scale(12) - Dim.scale(3), backgroundColor: interactiveLightColor}]}
+                activeOpacity={0.8}
+                onPress={() => {
+                    if (mode + 1 >= MODES_OEUFS.length) {
+                        setMode(0)
+                    } else {
+                        setMode(mode + 1)
+                    }
+                }}
+            >
+            </TouchableOpacity>
             <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
 
             <View style={styles.defaultPosition}>
@@ -538,6 +566,17 @@ function Jour({posx, posy, style, couleur, id, onPress, selected}: {posx: number
 }
 
 const styles = StyleSheet.create({
+    mode: {
+        borderRadius: Dim.scale(1),
+        width: Dim.scale(12),
+        height: Dim.scale(12),
+        backgroundColor: 'red',
+        position: 'absolute',
+        right: Dim.scale(3),
+        bottom: Dim.heightScale(100),
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     disqueJour: {
         position: 'absolute',
         backgroundColor: 'blue',
@@ -560,7 +599,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         textAlignVertical: 'center',
         fontSize: Dim.scale(6),
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     wrapper: {
         width: Dim.widthScale(100),
