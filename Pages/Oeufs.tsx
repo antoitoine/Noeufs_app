@@ -32,7 +32,7 @@ const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, cou
 const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
 const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
-const MODES_OEUFS = ['Poules', 'Cailles', 'Oies', 'Cannes']
+export const MODES_OEUFS = ['Poules', 'Cailles', 'Oies', 'Cannes']
 
 type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
@@ -65,14 +65,6 @@ export default function Oeufs({route, navigation}: Props) {
     const translation = useRef(new Animated.Value(0)).current;
     const nb_disques = JOURS_MOIS[moisReel]
 
-    /* Mode d'oeufs */
-
-    const [mode, setMode] = useState(0)
-
-    useEffect(() => {
-        navigation.setOptions({title: MODES_OEUFS[mode]})
-    }, [mode])
-
     /* Preferences */
 
     const theme = useContext(ThemeContext)!
@@ -80,6 +72,7 @@ export default function Oeufs({route, navigation}: Props) {
     const [idJourTheme, setIdJourTheme] = theme.idJour
     const [nbJoursTheme, setNbJoursTheme] = theme.nbJours
     const [headerHeight, setHeaderHeight] = theme.headerHeight
+    const [mode, ] = theme.mode
 
     useEffect(() => {
         setIdJourTheme(jourSelectionne)
@@ -94,6 +87,12 @@ export default function Oeufs({route, navigation}: Props) {
 
     const interactiveLightColor = Couleur.getRGBColorFromGradient(gradient, jourSelectionne)
     const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)
+
+    /* Mode d'oeufs */
+
+    useEffect(() => {
+        navigation.setOptions({title: MODES_OEUFS[mode]})
+    }, [mode])
 
     /* Insets */
 
@@ -359,19 +358,6 @@ export default function Oeufs({route, navigation}: Props) {
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
-            
-            <TouchableOpacity
-                style={[styles.mode, {zIndex: 1, bottom: Dim.heightScale(100) - headerHeight - Dim.scale(12) - Dim.scale(3), backgroundColor: interactiveLightColor}]}
-                activeOpacity={0.8}
-                onPress={() => {
-                    if (mode + 1 >= MODES_OEUFS.length) {
-                        setMode(0)
-                    } else {
-                        setMode(mode + 1)
-                    }
-                }}
-            >
-            </TouchableOpacity>
             <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
 
             <View style={styles.defaultPosition}>

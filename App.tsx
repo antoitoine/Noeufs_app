@@ -1,7 +1,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Oeufs from "./Pages/Oeufs";
+import Oeufs, { MODES_OEUFS } from "./Pages/Oeufs";
 import * as Dim from './Utils/Dimensions';
 import Parametres from "./Pages/Parametres";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -10,7 +10,7 @@ import { Background, HeaderButtonProps, getDefaultHeaderHeight } from "@react-na
 import Personnalisation from "./Pages/Personnalisation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { hexToRgb, getRGBColorFromGradient, degradeCouleur } from "./Utils/Couleurs";
-import { DEGRADES } from "./Constantes/Couleurs";
+import { DEGRADES, FAKE_WHITE } from "./Constantes/Couleurs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Compte from "./Pages/Compte";
 import { User, onAuthStateChanged } from "firebase/auth";
@@ -34,6 +34,7 @@ type themeContextType = {
     idJour: [idJour: number, setIdJour: Function]
     nbJours: [nbJours: number, setNbJours: Function]
     headerHeight: [headerHeight: number, setHeaderHeight: Function]
+    mode: [mode: number, setMode: Function]
 }
 
 type authContextType = {
@@ -52,19 +53,22 @@ export default function App() {
 
     /* Theme context */
 
-    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31, headerHeight: Dim.heightScale(7)})
+    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31, headerHeight: Dim.heightScale(7), mode: 0})
 
     function setBackgroundColor(bg: string) {
-        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight})
+        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: theme.mode})
     }
     function setIdJour(j: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours, headerHeight: theme.headerHeight})
+        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: theme.mode})
     }
     function setNbJours(n: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n, headerHeight: theme.headerHeight})
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n, headerHeight: theme.headerHeight, mode: theme.mode})
     }
     function setHeaderHeight(h: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: h})
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: h, mode: theme.mode})
+    }
+    function setMode(m: number) {
+        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: m})
     }
 
     useEffect(() => {
@@ -103,7 +107,8 @@ export default function App() {
             backgroundColor: [theme.backgroundColor, setBackgroundColor],
             idJour: [theme.idJour, setIdJour],
             nbJours: [theme.nbJours, setNbJours],
-            headerHeight: [theme.headerHeight, setHeaderHeight]
+            headerHeight: [theme.headerHeight, setHeaderHeight],
+            mode: [theme.mode, setMode]
         }}>
         <GestureHandlerRootView>
             <NavigationContainer>
@@ -174,7 +179,24 @@ export default function App() {
                         <Stack.Screen
                             name="Oeufs"
                             component={Oeufs}
-                            options={{title: 'Oeufs'}}
+                            options={{title: 'Oeufs', headerLeft: (props: HeaderButtonProps) => {
+                                const insets = useSafeAreaInsets()
+                                return (
+                                    <TouchableOpacity
+                                        style={[styles.headerModeButton, {top: insets.top + Dim.heightScale(1)}]}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            if (theme.mode + 1 >= MODES_OEUFS.length) {
+                                                setMode(0)
+                                            } else {
+                                                setMode(theme.mode + 1)
+                                            }
+                                        }}
+                                    >
+                                        <Text style={[styles.headerModeButtonText]}>{MODES_OEUFS[theme.mode].charAt(0)}</Text>
+                                    </TouchableOpacity>
+                                )
+                            }, headerBackVisible: true}}
                         />
                         <Stack.Screen
                             name="Personnalisation"
@@ -258,5 +280,22 @@ const styles = StyleSheet.create({
         width: Dim.heightScale(5),
         left: Dim.widthScale(2),
         top: Dim.heightScale(1),
+    },
+    headerModeButton: {
+        position: 'absolute',
+        backgroundColor: FAKE_WHITE,
+        left: Dim.heightScale(1),
+        top: Dim.heightScale(1),
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: Dim.scale(1)
+    },
+    headerModeButtonText: {
+        color: 'black',
+        fontSize: Dim.scale(5),
+        fontWeight: 'bold',
+        textAlign: 'center'
     }
 })
