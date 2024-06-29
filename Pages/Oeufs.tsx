@@ -12,6 +12,7 @@ import { get, onValue, ref, remove, set } from "firebase/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
+import moment from "moment";
 
 // Paramètres
 
@@ -38,8 +39,8 @@ type Props = NativeStackScreenProps<StackParamList, 'Oeufs'>;
  */
 export default function Oeufs({route, navigation}: Props) {
 
-    const [jourSelectionne, setJourSelectionne] = useState(0);
-    const [moisSelectionne, setMoisSelectionne] = useState(24 * 12 + 4);
+    const [jourSelectionne, setJourSelectionne] = useState(moment().date() - 1);
+    const [moisSelectionne, setMoisSelectionne] = useState(24 * 12 + moment().month());
 
     const moisReel = moisSelectionne % 12
     const anneeSelectionnee = 2000 + Math.floor(moisSelectionne / 12)
@@ -49,8 +50,14 @@ export default function Oeufs({route, navigation}: Props) {
 
     console.log(DEGRADES)
 
+    console.log('JOUR SELECTIONNE : ' + moment().month().toString() + ' ' + moisReel)
+
     useEffect(() => {
-        if (jourSelectionne != 0) setJourSelectionne(0);
+        if (moisReel === moment().month() && anneeSelectionnee === moment().year()) {
+            setJourSelectionne(moment().date() - 1)
+        } else if (jourSelectionne !== 0) {
+            setJourSelectionne(0)
+        }
     }, [moisSelectionne]);
 
     const translation = useRef(new Animated.Value(0)).current;

@@ -30,9 +30,9 @@ export default function Parametres({route, navigation}: Props) {
         <View style={styles.wrapper}>
             
             <Section
-                title='Animaux'
+                title='Historique'
                 onPress={() => {
-                    navigation.navigate('Animaux')
+                    navigation.navigate('Historique')
                 }}
                 color={interactiveColor}
             />
