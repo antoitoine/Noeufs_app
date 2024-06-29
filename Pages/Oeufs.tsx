@@ -482,7 +482,6 @@ export default function Oeufs({route, navigation}: Props) {
 function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string, onSubmit: Function}) {
     
     const text = useRef('')
-    const [textBlured, setTextBlured] = useState('')
     
     return (
         <TextInput
@@ -491,13 +490,12 @@ function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: 
             placeholder="0"
             placeholderTextColor={couleur2}
             onBlur={() => {
-                onSubmit(parseInt(textBlured))
-                text.current = ''                 // Sinon, enregistre la précédente valeur même en changeant de jour
-                setTextBlured('')
+                onSubmit(parseInt(text.current))
+                
             }}
             onChangeText={(t) => {
-                setTextBlured(parseInt(t).toString())
-                onSubmit(parseInt(textBlured))
+                text.current = t
+                onSubmit(parseInt(text.current))
             }}
             onStartShouldSetResponder={(event) => true}
             onTouchStart={(event) => event.stopPropagation()}
