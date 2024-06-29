@@ -16,13 +16,17 @@ import Compte from "./Pages/Compte";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import Historique from "./Pages/Historique";
+import Animaux from "./Pages/Animaux";
+import Statistiques from "./Pages/Statistiques";
 
 export type StackParamList = {
     Oeufs: undefined,
     Parametres: undefined,
     Personnalisation: undefined,
     Compte: undefined,
-    Historique: undefined
+    Historique: undefined,
+    Animaux: undefined,
+    Statistiques: undefined
 }
 
 type themeContextType = {
@@ -182,6 +186,16 @@ export default function App() {
                             name="Historique"
                             component={Historique}
                             options={{headerBackVisible: true, headerRight: undefined, title: 'Historique'}}
+                        />
+                        <Stack.Screen
+                            name="Animaux"
+                            component={Animaux}
+                            options={{headerBackVisible: true, headerRight: undefined, title: 'Animaux'}}
+                        />
+                        <Stack.Screen
+                            name="Statistiques"
+                            component={Statistiques}
+                            options={{headerBackVisible: true, headerRight: undefined, title: 'Statistiques'}}
                         />
                     </Stack.Group>
                 </Stack.Navigator>

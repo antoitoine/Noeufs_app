@@ -1,11 +1,11 @@
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import { AuthContext, StackParamList, ThemeContext } from "../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useContext, useEffect, useRef, useState } from "react";
 import { User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { auth } from '../firebase';
-import { TextInput } from "react-native-gesture-handler";
+import { FlatList, TextInput } from "react-native-gesture-handler";
 import * as Couleur from '../Utils/Couleurs'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
@@ -26,33 +26,33 @@ export default function Parametres({route, navigation}: Props) {
     const authContext = useContext(AuthContext)!
     const [user, ] = authContext.user
 
+    const pages = [
+        {id: 'Historique', title: 'Historique'},
+        {id: 'Personnalisation', title: 'Personnalisation'},
+        {id: 'Animaux', title: 'Animaux'},
+        {id: 'Compte', title: 'Mon compte'},
+        {id: 'Statistiques', title: 'Statistiques'},
+    ]
+
+    const renderItem = (item: ListRenderItemInfo<{id: string, title: string}>) => {
+        return (
+            <Section
+                title={item.item.title}
+                onPress={() => {
+                    navigation.navigate(item.item.id as keyof StackParamList)
+                }}
+                color={interactiveColor}
+            />
+        )
+    }
+
     return (
-        <View style={styles.wrapper}>
-            
-            <Section
-                title='Historique'
-                onPress={() => {
-                    navigation.navigate('Historique')
-                }}
-                color={interactiveColor}
-            />
-            
-            <Section
-                title='Personnalisation'
-                onPress={() => {
-                    navigation.navigate('Personnalisation')
-                }}
-                color={interactiveColor}
-            />
-            
-            <Section
-                title={user ? 'Mon compte' : 'Compte'}
-                onPress={() => {
-                    navigation.navigate('Compte')
-                }}
-                color={interactiveColor}
-            />
-        </View>
+        <FlatList
+            data={pages}
+            renderItem={renderItem}
+            contentContainerStyle={styles.container}
+            style={styles.wrapper}
+        />
     )
 }
 
@@ -100,44 +100,17 @@ const sectionStyles = StyleSheet.create({
     }
 })
 
-const deconnexionStyle = StyleSheet.create({
-    button: {
-        position: 'absolute',
-        bottom: Dim.heightScale(5),
-        width: Dim.widthScale(40),
-        height: Dim.heightScale(5),
-        left: Dim.widthScale(30),
-        borderRadius: Dim.scale(1)
-    },
-    text: {
-        textAlign: 'center',
-        textAlignVertical: 'center',
-        fontSize: Dim.scale(4),
-
-        color: 'black',
-        fontWeight: 'bold',
-        textShadowRadius: 5
-    }
-})
-
-const inputStyle = StyleSheet.create({
-    footer: {
-        textAlign: 'left',
-        fontSize: Dim.scale(3),
-    }
-})
-
 const styles = StyleSheet.create({
     wrapper: {
-        display: 'flex',
         flex: 1,
+
+        backgroundColor: FAKE_WHITE
+    },
+    container: {
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center',
-
-        paddingTop: Dim.heightScale(1),
-
-        backgroundColor: FAKE_WHITE
+        paddingTop: Dim.heightScale(1)
     },
     page: {
         position: 'relative',
