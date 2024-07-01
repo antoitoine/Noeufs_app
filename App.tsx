@@ -299,3 +299,5 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     }
 })
+
+// TODO : Ajouter dans le theme context - interactiveLightColor et interactiveDarkColor
