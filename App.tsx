@@ -18,10 +18,11 @@ import { auth } from "./firebase";
 import Historique from "./Pages/Historique";
 import Animaux from "./Pages/Animaux";
 import Statistiques from "./Pages/Statistiques";
+import SettingsContainer from "./Pages/Settings/SettingsContainer";
 
 export type StackParamList = {
     Oeufs: undefined,
-    Parametres: undefined,
+    Settings: undefined,
     Personnalisation: undefined,
     Compte: undefined,
     Historique: undefined,
@@ -122,7 +123,7 @@ export default function App() {
                             
                             return (
                                 <TouchableOpacity style={styles.settingsWrapper} onPress={() => {
-                                    navigation.navigate('Parametres')
+                                    navigation.navigate('Settings')
                                 }}>
                                     <Image source={require('./Images/settings_white.png')} style={[styles.settings, {top: insets.top}]} />
                                 </TouchableOpacity>
@@ -204,8 +205,8 @@ export default function App() {
                             options={{headerBackVisible: true, headerRight: undefined, title: 'Personnaliser'}}
                         />
                         <Stack.Screen
-                            name="Parametres"
-                            component={Parametres}
+                            name="Settings"
+                            component={SettingsContainer}
                             options={{headerBackVisible: true, headerRight: undefined, title: 'Paramètres'}}
                         />
                         <Stack.Screen
