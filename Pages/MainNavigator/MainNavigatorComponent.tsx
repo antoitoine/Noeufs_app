@@ -15,6 +15,8 @@ import HeaderContainer from "../Header/HeaderContainer";
 import BackButtonContainer from "../Header/BackButton/BackButtonContainer";
 import SettingsButtonContainer from "../Header/SettingsButton/SettingsButtonContainer";
 import { User } from "firebase/auth";
+import { ExtendedNavigationOptions } from "../../declarations/types.d";
+import ModeButtonContainer from "../Header/ModeButton/ModeButtonContainer";
 
 type MainNavigatorProps = {
     user: User | null
@@ -35,43 +37,45 @@ function MainNavigatorComponent({user}: MainNavigatorProps) {
                     title: "CocoPoule",
                     headerLeft: () => <BackButtonContainer route={route} navigation={navigation} />,
                     headerRight: () => <SettingsButtonContainer navigation={navigation} route={route} />,
+                    headerMiddle: () => <ModeButtonContainer navigation={navigation} route={route} />,
                     header: (props) => <HeaderContainer {...props} />,
-                })}
+                    
+                } as ExtendedNavigationOptions)}
                 >
                     <Stack.Screen
                         name="Oeufs"
                         component={Oeufs}
-                        options={{title: 'Oeufs', headerBackVisible: false}}
+                        options={{title: 'Oeufs', headerMiddleVisible: true, headerRightVisible: true} as ExtendedNavigationOptions}
                     />
                     <Stack.Screen
                         name="Personnalisation"
                         component={Personnalisation}
-                        options={{headerBackVisible: true, headerRight: undefined, title: 'Personnaliser'}}
+                        options={{headerBackVisible: true, title: 'Personnaliser'}}
                     />
                     <Stack.Screen
                         name="Settings"
                         component={SettingsContainer}
-                        options={{headerBackVisible: true, headerRight: undefined, title: 'Paramètres'}}
+                        options={{headerBackVisible: true, title: 'Paramètres'}}
                     />
                     <Stack.Screen
                         name="Compte"
                         component={Compte}
-                        options={{headerBackVisible: true, headerRight: undefined, title: user ? 'Mon compte' : 'Connexion'}}
+                        options={{headerBackVisible: true, title: user ? 'Mon compte' : 'Connexion'}}
                     />
                     <Stack.Screen
                         name="Historique"
                         component={Historique}
-                        options={{headerBackVisible: true, headerRight: undefined, title: 'Historique'}}
+                        options={{headerBackVisible: true, title: 'Historique'}}
                     />
                     <Stack.Screen
                         name="Animaux"
                         component={Animaux}
-                        options={{headerBackVisible: true, headerRight: undefined, title: 'Animaux'}}
+                        options={{headerBackVisible: true, title: 'Animaux'}}
                     />
                     <Stack.Screen
                         name="Statistiques"
                         component={Statistiques}
-                        options={{headerBackVisible: true, headerRight: undefined, title: 'Statistiques'}}
+                        options={{headerBackVisible: true, title: 'Statistiques'}}
                     />
                 </Stack.Group>
             </Stack.Navigator>

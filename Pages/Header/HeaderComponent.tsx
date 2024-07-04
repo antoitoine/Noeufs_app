@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from "react-native"
 import { EdgeInsets } from "react-native-safe-area-context"
 import * as Dim from '../../Utils/Dimensions'
 import { FAKE_WHITE } from "../../Constantes/Couleurs"
+import { optionsProps } from "./HeaderContainer"
+import { ExtendedNavigationOptions } from "../../declarations/types.d"
 
 type headerComponentProps = {
     insets: EdgeInsets
@@ -10,16 +12,18 @@ type headerComponentProps = {
     colors: {light: string, dark: string}
     leftButton: React.ReactNode
     rightButton: React.ReactNode
-    options: NativeStackNavigationOptions
+    middleButton: React.ReactNode
+    options: ExtendedNavigationOptions
 }
 
-function HeaderComponent({insets, height, colors, leftButton, rightButton, options}: headerComponentProps) {
+function HeaderComponent({insets, height, colors, leftButton, rightButton, middleButton, options}: headerComponentProps) {
     return (
         <View style={[styles.header, options.headerStyle, {paddingTop: insets.top, height: height, backgroundColor: colors.dark}]}>
             
-            {options.headerBackVisible ? leftButton : null}
+            {leftButton}
+            {middleButton}
 
-            <Text style={[styles.title, options.headerTitleStyle]}>{options.title}</Text>
+            <Text style={[styles.title, options.headerTitleStyle, {color: options.titleColor !== undefined ? options.titleColor : 'white'}]}>{options.title}</Text>
             
             {rightButton}
 
@@ -33,7 +37,7 @@ const styles = StyleSheet.create({
         height: Dim.heightScale(5),
         width: Dim.heightScale(5),
         right: Dim.widthScale(2),
-        top: Dim.heightScale(1),
+        top: Dim.heightScale(1)
     },
     settings: {
         position: 'relative',

@@ -1,4 +1,4 @@
-import { NativeStackHeaderProps } from "@react-navigation/native-stack"
+import { NativeStackHeaderProps, NativeStackNavigationOptions } from "@react-navigation/native-stack"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import * as Dim from '../../Utils/Dimensions'
 import { DEGRADES } from "../../Constantes/Couleurs"
@@ -6,12 +6,17 @@ import { degradeCouleur, getRGBColorFromGradient } from "../../Utils/Couleurs"
 import { useContext, useEffect } from "react"
 import { ThemeContext } from "../../App"
 import HeaderComponent from './HeaderComponent'
+import { ExtendedHeaderProps } from "../../declarations/types.d"
 
-type headerContainerProps = {
-    
+export interface optionsProps extends NativeStackNavigationOptions {
+    titleColor?: string
 }
 
-function HeaderContainer({back, options, route, navigation}: headerContainerProps & NativeStackHeaderProps) {
+interface headerContainerProps extends NativeStackHeaderProps {
+    options: optionsProps
+}
+
+function HeaderContainer({route, navigation, options}: ExtendedHeaderProps) {
 
     const insets = useSafeAreaInsets()
 
@@ -31,11 +36,9 @@ function HeaderContainer({back, options, route, navigation}: headerContainerProp
     const gradient2 = degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nbJours)
     const color2 = getRGBColorFromGradient(gradient2, idJour)
 
-    const rightButton = options.headerRight ? options.headerRight({canGoBack: true}) : null
-    const leftButton = options.headerLeft ? options.headerLeft({canGoBack: true}) : null
-
-    console.log('LEFT BUTTON : ')
-    console.log(leftButton)
+    const rightButton = options.headerRight && options.headerRightVisible? options.headerRight({canGoBack: true}) : null
+    const leftButton = options.headerLeft && options.headerBackVisible ? options.headerLeft({canGoBack: true}) : null
+    const middleButton = options.headerMiddle && options.headerMiddleVisible ? options.headerMiddle() : null
 
     return (
         <HeaderComponent
@@ -44,6 +47,7 @@ function HeaderContainer({back, options, route, navigation}: headerContainerProp
             colors={{dark: color, light: color2}}
             leftButton={leftButton}
             rightButton={rightButton}
+            middleButton={middleButton}
             options={options}
         />
     )
