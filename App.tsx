@@ -1,24 +1,13 @@
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Oeufs, { MODES_OEUFS } from "./Pages/Oeufs";
+import { StyleSheet } from "react-native";
 import * as Dim from './Utils/Dimensions';
-import Parametres from "./Pages/Parametres";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { EdgeInsets, SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Background, HeaderButtonProps, getDefaultHeaderHeight } from "@react-navigation/elements";
-import Personnalisation from "./Pages/Personnalisation";
-import { createContext, useContext, useEffect, useState } from "react";
-import { hexToRgb, getRGBColorFromGradient, degradeCouleur } from "./Utils/Couleurs";
-import { DEGRADES, FAKE_WHITE } from "./Constantes/Couleurs";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { createContext, useEffect, useState } from "react";
+import { FAKE_WHITE } from "./Constantes/Couleurs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Compte from "./Pages/Compte";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import Historique from "./Pages/Historique";
-import Animaux from "./Pages/Animaux";
-import Statistiques from "./Pages/Statistiques";
-import SettingsContainer from "./Pages/Settings/SettingsContainer";
+import MainNavigatorContainer from "./Pages/MainNavigator/MainNavigatorContainer";
 
 export type StackParamList = {
     Oeufs: undefined,
@@ -44,8 +33,6 @@ type authContextType = {
 
 export const ThemeContext = createContext<themeContextType | null>(null)
 export const AuthContext = createContext<authContextType | null>(null)
-
-const Stack = createNativeStackNavigator<StackParamList>()
 
 /**
  * Point d'entrée de l'application mobile
@@ -112,7 +99,82 @@ export default function App() {
             mode: [theme.mode, setMode]
         }}>
         <GestureHandlerRootView>
-            <NavigationContainer>
+            <MainNavigatorContainer />
+        </GestureHandlerRootView>
+        </ThemeContext.Provider>
+        </AuthContext.Provider>
+        </SafeAreaProvider>
+    )
+}
+
+const styles = StyleSheet.create({
+    settingsWrapper: {
+        position: 'absolute',
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+        right: Dim.widthScale(2),
+        top: Dim.heightScale(1),
+    },
+    settings: {
+        position: 'relative',
+        top: 0,
+        left: 0,
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+    },
+    header: {
+        height: Dim.heightScale(8),
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+
+    },
+    title: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: Dim.scale(6)
+    },
+    back: {
+        position: 'relative',
+        top: 0,
+        left: 0,
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+    },
+    backWrapper: {
+        position: 'absolute',
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+        left: Dim.widthScale(2),
+        top: Dim.heightScale(1),
+    },
+    headerModeButton: {
+        position: 'absolute',
+        backgroundColor: FAKE_WHITE,
+        left: Dim.heightScale(1),
+        top: Dim.heightScale(1),
+        height: Dim.heightScale(5),
+        width: Dim.heightScale(5),
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: Dim.scale(1)
+    },
+    headerModeButtonText: {
+        color: 'black',
+        fontSize: Dim.scale(5),
+        fontWeight: 'bold',
+        textAlign: 'center'
+    }
+})
+
+// TODO : Ajouter dans le theme context - interactiveLightColor et interactiveDarkColor
+
+
+/*
+
+<NavigationContainer>
                 <Stack.Navigator initialRouteName="Oeufs" screenOptions={{gestureEnabled: true}}>
                     <Stack.Group
                     screenOptions={({route, navigation}) => ({
@@ -232,73 +294,4 @@ export default function App() {
                     </Stack.Group>
                 </Stack.Navigator>
             </NavigationContainer>
-        </GestureHandlerRootView>
-        </ThemeContext.Provider>
-        </AuthContext.Provider>
-        </SafeAreaProvider>
-    )
-}
-
-const styles = StyleSheet.create({
-    settingsWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        right: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    settings: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    header: {
-        height: Dim.heightScale(8),
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-    },
-    title: {
-        textAlign: 'center',
-        textAlignVertical: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: Dim.scale(6)
-    },
-    back: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    backWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        left: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    headerModeButton: {
-        position: 'absolute',
-        backgroundColor: FAKE_WHITE,
-        left: Dim.heightScale(1),
-        top: Dim.heightScale(1),
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: Dim.scale(1)
-    },
-    headerModeButtonText: {
-        color: 'black',
-        fontSize: Dim.scale(5),
-        fontWeight: 'bold',
-        textAlign: 'center'
-    }
-})
-
-// TODO : Ajouter dans le theme context - interactiveLightColor et interactiveDarkColor
+            */

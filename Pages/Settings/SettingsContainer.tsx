@@ -5,9 +5,9 @@ import * as Couleur from '../../Utils/Couleurs'
 import { DEGRADES } from "../../Constantes/Couleurs";
 import SettingsComponent from "./SettingsComponent";
 
-type Props = NativeStackScreenProps<StackParamList, 'Settings'>;
+type NavigationProps = NativeStackScreenProps<StackParamList, 'Settings'>;
 
-function SettingsContainer({route, navigation}: Props) {
+function SettingsContainer({route, navigation}: NavigationProps) {
 
     const theme = useContext(ThemeContext)!
     const [backgroundColor, ] = theme.backgroundColor
