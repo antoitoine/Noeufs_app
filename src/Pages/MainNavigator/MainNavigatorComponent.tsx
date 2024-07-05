@@ -1,21 +1,21 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StyleSheet } from "react-native";
-import Oeufs from "../../Pages/Oeufs";
+import Oeufs from "../Oeufs";
 import * as Dim from '../../Utils/Dimensions';
-import Personnalisation from "../../Pages/Personnalisation";
+import Personnalisation from "../Personnalisation";
 import { FAKE_WHITE } from "../../Constantes/Couleurs";
-import Compte from "../../Pages/Compte";
-import Historique from "../../Pages/Historique";
-import Animaux from "../../Pages/Animaux";
-import Statistiques from "../../Pages/Statistiques";
-import SettingsContainer from "../../Pages/Settings/SettingsContainer";
-import { StackParamList } from "../../App";
+import Compte from "../Compte";
+import Historique from "../Historique";
+import Animaux from "../Animaux";
+import Statistiques from "../Statistiques";
+import SettingsContainer from "../Settings/SettingsContainer";
+import { StackParamList } from "../../../App";
 import HeaderContainer from "../Header/HeaderContainer";
 import BackButtonContainer from "../Header/BackButton/BackButtonContainer";
 import SettingsButtonContainer from "../Header/SettingsButton/SettingsButtonContainer";
 import { User } from "firebase/auth";
-import { ExtendedNavigationOptions } from "../../declarations/types.d";
+import { ExtendedNavigationOptions } from "../../Declare/types.d";
 import ModeButtonContainer from "../Header/ModeButton/ModeButtonContainer";
 
 type MainNavigatorProps = {

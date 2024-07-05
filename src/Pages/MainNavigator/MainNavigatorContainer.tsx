@@ -1,5 +1,5 @@
 import MainNavigatorComponent from "./MainNavigatorComponent";
-import { AuthContext } from "../../App";
+import { AuthContext } from "../../../App";
 import { useContext } from "react";
 
 type MainNavigatorContainerProps = {

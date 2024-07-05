@@ -4,7 +4,7 @@ import { EdgeInsets } from "react-native-safe-area-context"
 import * as Dim from '../../Utils/Dimensions'
 import { FAKE_WHITE } from "../../Constantes/Couleurs"
 import { optionsProps } from "./HeaderContainer"
-import { ExtendedNavigationOptions } from "../../declarations/types.d"
+import { ExtendedNavigationOptions } from "../../Declare/types.d"
 
 type headerComponentProps = {
     insets: EdgeInsets

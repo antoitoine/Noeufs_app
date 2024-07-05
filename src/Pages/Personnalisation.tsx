@@ -1,25 +1,25 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { StackParamList, ThemeContext } from "../App";
+import { StackParamList } from "../../App";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
 import * as Dim from '../Utils/Dimensions'
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
+import { ThemeContext } from "../Contexts/ThemeContext";
 
 type Props = NativeStackScreenProps<StackParamList, 'Personnalisation'>
 
 export default function Personnalisation({route, navigation}: Props) {
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, setBackgroundColor] = theme.backgroundColor
 
     useEffect(() => {
         AsyncStorage.setItem('userPreferences', JSON.stringify({
-            'backgroundColor': backgroundColor
+            'backgroundColor': theme.backgroundColor
         }))
-    }, [backgroundColor])
+    }, [theme.backgroundColor])
 
     const [show, setShow] = useState(false)
     
@@ -33,7 +33,7 @@ export default function Personnalisation({route, navigation}: Props) {
                             key={i}
                             id={i}
                             onPress={(id: string) => {
-                                setBackgroundColor(id)
+                                theme.setBackgroundColor(id)
                                 //setShow(!show)
                             }}
                         />

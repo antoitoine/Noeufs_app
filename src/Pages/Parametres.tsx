@@ -1,27 +1,25 @@
 import { Alert, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
-import { AuthContext, StackParamList, ThemeContext } from "../App";
+import { AuthContext, StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useContext, useEffect, useRef, useState } from "react";
 import { User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
-import { auth } from '../firebase';
+import { auth } from '../../firebase';
 import { FlatList, TextInput } from "react-native-gesture-handler";
 import * as Couleur from '../Utils/Couleurs'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
+import { ThemeContext } from "../Contexts/ThemeContext";
 
-type Props = NativeStackScreenProps<StackParamList, 'Parametres'>;
+type Props = NativeStackScreenProps<StackParamList, 'Settings'>;
 
 export default function Parametres({route, navigation}: Props) {
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, ] = theme.backgroundColor
-    const [idJour, ] = theme.idJour
-    const [nbJours, ] = theme.nbJours
 
-    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, idJour)
+    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
+    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
 
     const authContext = useContext(AuthContext)!
     const [user, ] = authContext.user

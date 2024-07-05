@@ -1,24 +1,22 @@
-import { StackParamList, ThemeContext } from "../../App";
+import { StackParamList } from "../../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useContext } from "react";
 import * as Couleur from '../../Utils/Couleurs'
 import { DEGRADES } from "../../Constantes/Couleurs";
 import SettingsComponent from "./SettingsComponent";
+import { ThemeContext } from "../../Contexts/ThemeContext";
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Settings'>;
 
 function SettingsContainer({route, navigation}: NavigationProps) {
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, ] = theme.backgroundColor
-    const [idJour, ] = theme.idJour
-    const [nbJours, ] = theme.nbJours
 
-    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, idJour)
+    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
+    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
 
-    const gradient2 = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nbJours)
-    const interactiveColor2 = Couleur.getRGBColorFromGradient(gradient2, idJour)
+    const gradient2 = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], theme.nbJours)
+    const interactiveColor2 = Couleur.getRGBColorFromGradient(gradient2, theme.idJour)
 
     return (
         <SettingsComponent

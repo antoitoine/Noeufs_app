@@ -1,7 +1,7 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import BackButtonComponent from "./BackButtonComponent"
 import { RouteProp } from "@react-navigation/native"
-import { StackParamList } from "../../../App"
+import { StackParamList } from "../../../../App"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { GestureResponderEvent } from "react-native"
 

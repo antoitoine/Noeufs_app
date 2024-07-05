@@ -5,10 +5,10 @@ import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 import { FlatList } from "react-native-gesture-handler";
 import * as Couleur from '../Utils/Couleurs'
 import { useContext, useEffect, useState } from "react";
-import { ThemeContext } from "../App";
 import { NOMS_JOURS, NOMS_MOIS, date } from "../Utils/Date";
 import moment from "moment"
 import 'moment/min/locales'
+import { ThemeContext } from "../Contexts/ThemeContext";
 
 function createData(nbItems: number) {
     const data = []
@@ -33,17 +33,14 @@ function createFooterData(items: Array<{text: string, value: string}>) {
 export default function Historique() {
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, ] = theme.backgroundColor
-    const [idJour, ] = theme.idJour
-    const [nbJours, ] = theme.nbJours
 
     const [moisChoisi, setMoisChoisi] = useState(parseInt(moment().format('MM')))
     const [tapping, setTapping] = useState({isFirstTap: true, firstDate: moment().format('DD/MM/YYYY'), secondDate: moment().format('DD/MM/YYYY')})
 
-    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nbJours)
-    const gradientDark = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, idJour)
-    const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradientDark, idJour)
+    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], theme.nbJours)
+    const gradientDark = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
+    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
+    const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradientDark, theme.idJour)
 
     useEffect(() => {
         moment.locale(['fr', 'en'])

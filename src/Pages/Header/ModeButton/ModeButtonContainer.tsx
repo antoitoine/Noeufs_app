@@ -1,11 +1,12 @@
 import { GestureResponderEvent } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { RouteProp } from "@react-navigation/native"
-import { StackParamList, ThemeContext } from "../../../App"
+import { StackParamList } from "../../../../App"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { useContext, useEffect, useState } from "react"
 import ModeButtonComponent from "./ModeButtonComponent"
 import { MODES_OEUFS } from "../../Oeufs"
+import { ThemeContext } from "../../../Contexts/ThemeContext"
 
 type ModeButtonContainerType = {
     route: RouteProp<StackParamList, keyof StackParamList> | any
@@ -18,21 +19,16 @@ function ModeButtonContainer({route, navigation}: ModeButtonContainerType) {
     const [click, setClick] = useState(false)
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, ] = theme.backgroundColor
-    const [idJour, ] = theme.idJour
-    const [nbJours, ] = theme.nbJours
-    const [headerHeight, setHeaderHeight] = theme.headerHeight
-    const [mode, setMode] = theme.mode
 
     useEffect(() => {
         console.log('test')
     }, [click])
 
     const handlePress = (event: GestureResponderEvent) => {
-        if (mode + 1 >= MODES_OEUFS.length) {
-            setMode(0)
+        if (theme.mode + 1 >= MODES_OEUFS.length) {
+            theme.setMode(0)
         } else {
-            setMode(mode + 1)
+            theme.setMode(theme.mode + 1)
         }
     }
     
@@ -41,7 +37,7 @@ function ModeButtonContainer({route, navigation}: ModeButtonContainerType) {
         <ModeButtonComponent
             onPress={handlePress}
             insets={insets}
-            mode={mode}
+            mode={theme.mode}
         />
     )
 }

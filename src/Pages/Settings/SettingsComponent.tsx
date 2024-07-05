@@ -1,6 +1,6 @@
 import { ListRenderItemInfo, StyleSheet } from "react-native";
 import * as Dim from '../../Utils/Dimensions';
-import { StackParamList } from "../../App";
+import { StackParamList } from "../../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { FlatList } from "react-native-gesture-handler";
 import { FAKE_WHITE } from "../../Constantes/Couleurs";

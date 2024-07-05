@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthContext, StackParamList, ThemeContext } from "../App";
+import { AuthContext, StackParamList } from "../../App";
 import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { useContext, useRef, useState } from "react";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
@@ -7,9 +7,10 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 import * as Dim from '../Utils/Dimensions'
 import * as Couleur from '../Utils/Couleurs'
+import { ThemeContext } from "../Contexts/ThemeContext";
 
 
 type Props = NativeStackScreenProps<StackParamList, 'Compte'>
@@ -30,13 +31,10 @@ export default function Compte({route, navigation}: Props) {
 
     /* Theme */
 
-    const themeContext = useContext(ThemeContext)!
-    const [backgroundColor, ] = themeContext.backgroundColor
-    const [idJour, ] = themeContext.idJour
-    const [nbJours, ] = themeContext.nbJours
+    const theme = useContext(ThemeContext)!
 
-    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, idJour)
+    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
+    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
 
     /* Account functions */
 
@@ -164,7 +162,7 @@ export default function Compte({route, navigation}: Props) {
                     }}
                     footer={warnMessages.email}
                     footerColor='red'
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
+                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
                     email={true}
                 />
 
@@ -174,7 +172,7 @@ export default function Compte({route, navigation}: Props) {
                         name.current = text
                     }}
                     visible={inscription}
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
+                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
                     maxSize={20}
                 />
 
@@ -186,7 +184,7 @@ export default function Compte({route, navigation}: Props) {
                     }}
                     footer={warnMessages.password}
                     footerColor='red'
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, idJour)}
+                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
                     maxSize={256}
                 />
 

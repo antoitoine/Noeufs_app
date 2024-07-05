@@ -1,13 +1,10 @@
-import { StyleSheet } from "react-native";
-import * as Dim from './Utils/Dimensions';
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { createContext, useEffect, useState } from "react";
-import { FAKE_WHITE } from "./Constantes/Couleurs";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import MainNavigatorContainer from "./Pages/MainNavigator/MainNavigatorContainer";
+import MainNavigatorContainer from "./src/Pages/MainNavigator/MainNavigatorContainer";
+import { ThemeProvider } from "./src/Contexts/ThemeContext";
 
 export type StackParamList = {
     Oeufs: undefined,
@@ -19,53 +16,16 @@ export type StackParamList = {
     Statistiques: undefined
 }
 
-type themeContextType = {
-    backgroundColor: [backgroundColor: string, setBackgroundColor: Function]
-    idJour: [idJour: number, setIdJour: Function]
-    nbJours: [nbJours: number, setNbJours: Function]
-    headerHeight: [headerHeight: number, setHeaderHeight: Function]
-    mode: [mode: number, setMode: Function]
-}
-
 type authContextType = {
     user: [user: User | null, setUser: Function]
 }
 
-export const ThemeContext = createContext<themeContextType | null>(null)
 export const AuthContext = createContext<authContextType | null>(null)
 
 /**
  * Point d'entrée de l'application mobile
  */
 export default function App() {
-
-    /* Theme context */
-
-    const [theme, setTheme] = useState({backgroundColor: 'c1', idJour: 0, nbJours: 31, headerHeight: Dim.heightScale(7), mode: 0})
-
-    function setBackgroundColor(bg: string) {
-        setTheme({backgroundColor: bg, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: theme.mode})
-    }
-    function setIdJour(j: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: j, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: theme.mode})
-    }
-    function setNbJours(n: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: n, headerHeight: theme.headerHeight, mode: theme.mode})
-    }
-    function setHeaderHeight(h: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: h, mode: theme.mode})
-    }
-    function setMode(m: number) {
-        setTheme({backgroundColor: theme.backgroundColor, idJour: theme.idJour, nbJours: theme.nbJours, headerHeight: theme.headerHeight, mode: m})
-    }
-
-    useEffect(() => {
-        AsyncStorage.getItem('userPreferences').then((value) => {
-            if (value !== null) {
-                setBackgroundColor(JSON.parse(value).backgroundColor)
-            }
-        })
-    }, [])
 
     /* Auth context */
 
@@ -91,83 +51,15 @@ export default function App() {
         <AuthContext.Provider value={{
             user: [authContext.user, setUser]
         }}>
-        <ThemeContext.Provider value={{
-            backgroundColor: [theme.backgroundColor, setBackgroundColor],
-            idJour: [theme.idJour, setIdJour],
-            nbJours: [theme.nbJours, setNbJours],
-            headerHeight: [theme.headerHeight, setHeaderHeight],
-            mode: [theme.mode, setMode]
-        }}>
+        <ThemeProvider>
         <GestureHandlerRootView>
             <MainNavigatorContainer />
         </GestureHandlerRootView>
-        </ThemeContext.Provider>
+        </ThemeProvider>
         </AuthContext.Provider>
         </SafeAreaProvider>
     )
 }
-
-const styles = StyleSheet.create({
-    settingsWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        right: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    settings: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    header: {
-        height: Dim.heightScale(8),
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-    },
-    title: {
-        textAlign: 'center',
-        textAlignVertical: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: Dim.scale(6)
-    },
-    back: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    backWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        left: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    headerModeButton: {
-        position: 'absolute',
-        backgroundColor: FAKE_WHITE,
-        left: Dim.heightScale(1),
-        top: Dim.heightScale(1),
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: Dim.scale(1)
-    },
-    headerModeButtonText: {
-        color: 'black',
-        fontSize: Dim.scale(5),
-        fontWeight: 'bold',
-        textAlign: 'center'
-    }
-})
 
 // TODO : Ajouter dans le theme context - interactiveLightColor et interactiveDarkColor
 

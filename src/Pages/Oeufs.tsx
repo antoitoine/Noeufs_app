@@ -2,17 +2,18 @@ import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Ani
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useContext, useEffect, useRef, useState } from "react";
-import { AuthContext, StackParamList, ThemeContext } from "../App";
+import { AuthContext, StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
-import { database, auth } from "../firebase";
+import { database, auth } from "../../firebase";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { get, onValue, ref, remove, set } from "firebase/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 import moment from "moment";
+import { ThemeContext } from "../Contexts/ThemeContext";
 
 // Paramètres
 
@@ -68,22 +69,17 @@ export default function Oeufs({route, navigation}: Props) {
     /* Preferences */
 
     const theme = useContext(ThemeContext)!
-    const [backgroundColor, setBackgroundColor] = theme.backgroundColor
-    const [idJourTheme, setIdJourTheme] = theme.idJour
-    const [nbJoursTheme, setNbJoursTheme] = theme.nbJours
-    const [headerHeight, setHeaderHeight] = theme.headerHeight
-    const [mode, ] = theme.mode
 
     useEffect(() => {
-        setIdJourTheme(jourSelectionne)
+        theme.setIdJour(jourSelectionne)
     }, [jourSelectionne])
 
     useEffect(() => {
-        setNbJoursTheme(nb_disques)
+        theme.setNbJours(nb_disques)
     }, [moisSelectionne])
 
-    const gradient = Couleur.degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nb_disques)
-    const gradient2 = Couleur.degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nb_disques)
+    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], nb_disques)
+    const gradient2 = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], nb_disques)
 
     const interactiveLightColor = Couleur.getRGBColorFromGradient(gradient, jourSelectionne)
     const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)
@@ -91,8 +87,8 @@ export default function Oeufs({route, navigation}: Props) {
     /* Mode d'oeufs */
 
     useEffect(() => {
-        navigation.setOptions({title: MODES_OEUFS[mode]})
-    }, [mode])
+        navigation.setOptions({title: MODES_OEUFS[theme.mode]})
+    }, [theme.mode])
 
     /* Insets */
 
@@ -222,7 +218,7 @@ export default function Oeufs({route, navigation}: Props) {
         }
     }, [moisSelectionne, user])
 
-    console.log('HEADER HEIGHT : ' + headerHeight + ' ' + Dim.heightScale(7))
+    console.log('HEADER HEIGHT : ' + theme.headerHeight + ' ' + Dim.heightScale(7))
 
     /* Async storage */
 
