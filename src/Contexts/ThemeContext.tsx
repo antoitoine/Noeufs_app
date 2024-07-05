@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Dispatch, SetStateAction, createContext, useEffect, useState } from "react";
+import { DEGRADES } from "../Constantes/Couleurs";
+import { degradeCouleur, getRGBColorFromGradient } from "../Utils/Couleurs";
 
 type ThemeContextProps = {
     backgroundColor: string
@@ -12,6 +14,8 @@ type ThemeContextProps = {
     setHeaderHeight: Dispatch<SetStateAction<number>>
     mode: number
     setMode: Dispatch<SetStateAction<number>>
+    colors: {light: string, dark: string},
+    setColors: Dispatch<SetStateAction<{light: string, dark: string}>>
 }
 
 const ThemeContext = createContext<ThemeContextProps>({
@@ -24,7 +28,9 @@ const ThemeContext = createContext<ThemeContextProps>({
     headerHeight: 50,
     setHeaderHeight: () => {},
     mode: 0,
-    setMode: () => {}
+    setMode: () => {},
+    colors: {light: 'blue', dark: 'green'},
+    setColors: () => {}
 })
 
 type ThemeProviderProps = {
@@ -37,6 +43,7 @@ function ThemeProvider({children}: ThemeProviderProps) {
     const [nbJours, setNbJours] = useState(28)
     const [headerHeight, setHeaderHeight] = useState(50)
     const [mode, setMode] = useState(0)
+    const [colors, setColors] = useState({light: 'blue', dark: 'green'})
 
     useEffect(() => {
         AsyncStorage.getItem('userPreferences').then((value) => {
@@ -46,13 +53,28 @@ function ThemeProvider({children}: ThemeProviderProps) {
         })
     }, [])
 
+    useEffect(() => {
+        AsyncStorage.setItem('userPreferences', JSON.stringify({
+            'backgroundColor': backgroundColor
+        }))
+
+        const lightGradient = degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nbJours)
+        const lightColor = getRGBColorFromGradient(lightGradient, idJour)
+        const darkGradient = degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
+        const darkColor = getRGBColorFromGradient(darkGradient, idJour)
+
+        setColors({light: lightColor, dark: darkColor})
+
+    }, [backgroundColor])
+
     return (
         <ThemeContext.Provider value={{
             backgroundColor, setBackgroundColor,
             idJour, setIdJour,
             nbJours, setNbJours,
             headerHeight, setHeaderHeight,
-            mode, setMode
+            mode, setMode,
+            colors, setColors
         }}>
             {children}
         </ThemeContext.Provider>

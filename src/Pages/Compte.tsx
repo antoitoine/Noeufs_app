@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { auth } from "../../firebase";
 import * as Dim from '../Utils/Dimensions'
-import * as Couleur from '../Utils/Couleurs'
 import { ThemeContext } from "../Contexts/ThemeContext";
 import { AuthContext } from "../Contexts/AuthContext";
 
@@ -31,9 +30,6 @@ export default function Compte({route, navigation}: Props) {
     /* Theme */
 
     const theme = useContext(ThemeContext)!
-
-    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
 
     /* Account functions */
 
@@ -130,7 +126,7 @@ export default function Compte({route, navigation}: Props) {
         return (
             <View style={[connectedStyles.wrapper, {paddingBottom: insets.bottom}]}>
                 <View style={connectedStyles.upperPart}>
-                    <Text style={[connectedStyles.helloMessage, {color: interactiveColor}]}>
+                    <Text style={[connectedStyles.helloMessage, {color: theme.colors.dark}]}>
                         Connecté en tant que {authContext.user.displayName} !
                     </Text>
                 </View>
@@ -153,7 +149,7 @@ export default function Compte({route, navigation}: Props) {
     } else {
         return (
             <View style={disconnectedStyles.wrapper}>
-                <Text style={[disconnectedStyles.message, {color: interactiveColor}]}>Connectez-vous pour enregistrer vos récoltes dans le cloud !</Text>
+                <Text style={[disconnectedStyles.message, {color: theme.colors.dark}]}>Connectez-vous pour enregistrer vos récoltes dans le cloud !</Text>
                 <InputField
                     title="Adresse email"
                     onSubmit={(text: string) => {
@@ -161,7 +157,7 @@ export default function Compte({route, navigation}: Props) {
                     }}
                     footer={warnMessages.email}
                     footerColor='red'
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
+                    titleColor={theme.colors.dark}
                     email={true}
                 />
 
@@ -171,7 +167,7 @@ export default function Compte({route, navigation}: Props) {
                         name.current = text
                     }}
                     visible={inscription}
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
+                    titleColor={theme.colors.dark}
                     maxSize={20}
                 />
 
@@ -183,7 +179,7 @@ export default function Compte({route, navigation}: Props) {
                     }}
                     footer={warnMessages.password}
                     footerColor='red'
-                    titleColor={Couleur.getRGBColorFromGradient(gradient, theme.idJour)}
+                    titleColor={theme.colors.dark}
                     maxSize={256}
                 />
 
@@ -206,7 +202,7 @@ export default function Compte({route, navigation}: Props) {
                 else connectUser()
             }}
         >
-            <Text style={[connexionButtonStyles.text, {color: interactiveColor}]}>{inscription ? 'S\'inscrire' : 'Se connecter'}</Text>
+            <Text style={[connexionButtonStyles.text, {color: theme.colors.dark}]}>{inscription ? 'S\'inscrire' : 'Se connecter'}</Text>
         </TouchableOpacity>
     )
 }

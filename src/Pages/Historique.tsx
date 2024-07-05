@@ -1,9 +1,8 @@
 import { Dimensions, ListRenderItem, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as Dim from "../Utils/Dimensions"
-import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
+import { FAKE_WHITE } from "../Constantes/Couleurs";
 import { FlatList } from "react-native-gesture-handler";
-import * as Couleur from '../Utils/Couleurs'
 import { useContext, useEffect, useState } from "react";
 import { NOMS_JOURS, NOMS_MOIS, date } from "../Utils/Date";
 import moment from "moment"
@@ -36,11 +35,6 @@ export default function Historique() {
 
     const [moisChoisi, setMoisChoisi] = useState(parseInt(moment().format('MM')))
     const [tapping, setTapping] = useState({isFirstTap: true, firstDate: moment().format('DD/MM/YYYY'), secondDate: moment().format('DD/MM/YYYY')})
-
-    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], theme.nbJours)
-    const gradientDark = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
-    const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
-    const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradientDark, theme.idJour)
 
     useEffect(() => {
         moment.locale(['fr', 'en'])
@@ -76,14 +70,14 @@ export default function Historique() {
                     disabled={true}
                     activeOpacity={0.8}
                 >
-                    <Text style={[styles.gridItemText, {color: interactiveColor}]}>{NOMS_JOURS[idDay-1].charAt(0)}</Text>
+                    <Text style={[styles.gridItemText, {color: theme.colors.dark}]}>{NOMS_JOURS[idDay-1].charAt(0)}</Text>
                 </TouchableOpacity>
             )
         }
         else {
             return (
                 <TouchableOpacity
-                    style={[styles.gridItem, {backgroundColor: selected ? interactiveDarkColor : (selected2 ? (!tapping.isFirstTap ? 'red' : interactiveDarkColor) : interactiveColor), opacity: disabled ? 0 : 1}]}
+                    style={[styles.gridItem, {backgroundColor: selected ? theme.colors.dark : (selected2 ? (!tapping.isFirstTap ? 'red' : theme.colors.dark) : theme.colors.light), opacity: disabled ? 0 : 1}]}
                     disabled={disabled}
                     activeOpacity={0.8}
                     onPress={() => {
@@ -100,7 +94,7 @@ export default function Historique() {
     const renderFooterItem = (item: ListRenderItemInfo<{id: number, text: string, value: string}>) => {
         return (
             <TouchableOpacity
-                style={[styles.footerItem, {backgroundColor: interactiveColor}]}
+                style={[styles.footerItem, {backgroundColor: theme.colors.light}]}
                 activeOpacity={0.8}
             >
                 <Text style={styles.footerText}>{item.item.text}</Text>
@@ -139,7 +133,7 @@ export default function Historique() {
                 <Text style={styles.buttonText}>{'<'}</Text>
             </TouchableOpacity>
 
-            <Text style={[styles.affichageMois, {color: interactiveDarkColor}]}>{moment('01/' + moisChoisi.toString() + '/2024', 'DD/MM/YYYY').format('MMMM YYYY')}</Text>
+            <Text style={[styles.affichageMois, {color: theme.colors.dark}]}>{moment('01/' + moisChoisi.toString() + '/2024', 'DD/MM/YYYY').format('MMMM YYYY')}</Text>
             
             <TouchableOpacity
                 activeOpacity={0.8}

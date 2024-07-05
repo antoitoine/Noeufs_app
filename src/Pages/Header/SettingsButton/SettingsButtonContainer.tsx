@@ -14,11 +14,6 @@ type SettingsButtonContainerProps = {
 function SettingsButtonContainer({route, navigation}: SettingsButtonContainerProps) {
 
     const insets = useSafeAreaInsets()
-    const [click, setClick] = useState(false)
-
-    useEffect(() => {
-        console.log('test')
-    }, [click])
 
     const handlePress = (event: GestureResponderEvent) => {
         navigation.navigate('Settings')

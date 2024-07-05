@@ -1,13 +1,11 @@
-import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, Alert, KeyboardAvoidingView, Keyboard } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Animated, KeyboardAvoidingView, Keyboard } from "react-native";
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useContext, useEffect, useRef, useState } from "react";
 import { StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
-import { database, auth } from "../../firebase";
-import { User, onAuthStateChanged } from "firebase/auth";
+import { database } from "../../firebase";
 import { get, onValue, ref, remove, set } from "firebase/database";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,18 +19,6 @@ import { AuthContext } from "../Contexts/AuthContext";
 const NOMS_MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
 const taille_disque = Dim.scale(6);
-
-const couleur_debut_hex = Couleur.hexToRgb('#FFB9B9'); // Claires
-const couleur_fin_hex = Couleur.hexToRgb('#C8B9FF');
-
-const couleur_debut_hex2 = Couleur.hexToRgb('#FF4C4C'); // Foncées
-const couleur_fin_hex2 = Couleur.hexToRgb('#7651FF');
-
-const couleur_debut =  couleur_debut_hex ? [couleur_debut_hex.r, couleur_debut_hex.g, couleur_debut_hex.b] : [0, 0, 0];
-const couleur_fin = couleur_fin_hex ? [couleur_fin_hex.r, couleur_fin_hex.g, couleur_fin_hex.b] : [0, 0, 0];
-
-const couleur_debut2 =  couleur_debut_hex2 ? [couleur_debut_hex2.r, couleur_debut_hex2.g, couleur_debut_hex2.b] : [0, 0, 0];
-const couleur_fin2 = couleur_fin_hex2 ? [couleur_fin_hex2.r, couleur_fin_hex2.g, couleur_fin_hex2.b] : [0, 0, 0];
 
 export const MODES_OEUFS = ['Poules', 'Cailles', 'Oies', 'Cannes']
 
@@ -51,10 +37,6 @@ export default function Oeufs({route, navigation}: Props) {
 
     const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
     const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-    console.log(DEGRADES)
-
-    console.log('JOUR SELECTIONNE : ' + moment().month().toString() + ' ' + moisReel)
 
     useEffect(() => {
         if (moisReel === moment().month() && anneeSelectionnee === moment().year()) {
@@ -82,9 +64,6 @@ export default function Oeufs({route, navigation}: Props) {
     const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], nb_disques)
     const gradient2 = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], nb_disques)
 
-    const interactiveLightColor = Couleur.getRGBColorFromGradient(gradient, jourSelectionne)
-    const interactiveDarkColor = Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)
-
     /* Mode d'oeufs */
 
     useEffect(() => {
@@ -107,7 +86,6 @@ export default function Oeufs({route, navigation}: Props) {
 
     useEffect(() => { // Connexion à un utilisateur
         if (authContext.user !== null) {
-            console.log(authContext.user)
             console.log('User connected : ' + authContext.user.email + ' ' + authContext.user.displayName) // Connexion
             console.log(authContext.user.uid)
 
@@ -182,7 +160,6 @@ export default function Oeufs({route, navigation}: Props) {
             AsyncStorage.getItem('oeufsStorage').then((value) => {
                 console.log('getItem')
                 const v = value !== null ? JSON.parse(value) : null
-                console.log(v)
 
                 if (v !== null) { // oeufsStorage existe
                     console.log('oeufsStorage existe')
@@ -205,8 +182,7 @@ export default function Oeufs({route, navigation}: Props) {
                     nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
                 }
 
-                console.log('Update nbOeufs :')
-                console.log(nbOeufsParJour_ref.current)
+                console.log('Update nbOeufs...')
 
                 setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
                 
@@ -250,9 +226,6 @@ export default function Oeufs({route, navigation}: Props) {
     }
 
     const setData = async(value: string) => {
-
-        console.log('setData(' + value + ')')
-
         try {
             AsyncStorage.getItem('oeufsStorage').then(async(res) => {
                 var json_value = res !== null ? JSON.parse(res) : null
@@ -322,7 +295,7 @@ export default function Oeufs({route, navigation}: Props) {
             >
                 
                 <View style={styles.affichageOeufs}>
-                    <Text style={[styles.affichageOeufsText, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>
+                    <Text style={[styles.affichageOeufsText, {color: theme.colors.dark}]}>
                         {nbOeufs_text}
                     </Text>
                 </View>
@@ -354,7 +327,7 @@ export default function Oeufs({route, navigation}: Props) {
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
-            <Text style={[styles.affichageJour, {color: Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
+            <Text style={[styles.affichageJour, {color: theme.colors.dark}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -421,7 +394,7 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={bottomPos}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur={theme.colors.dark}
                 texte={'Réinitialiser'}
                 onPress={() => {
                     if (authContext.user) {
@@ -436,7 +409,7 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={bottomPos + Dim.heightScale(11)}
                 width={Dim.widthScale(96)}
                 height={Dim.heightScale(5)}
-                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur={theme.colors.dark}
                 texte="Valider"
                 onPress={() => {
                     Keyboard.dismiss()
@@ -461,8 +434,8 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={bottomPos}
                 width={Dim.widthScale(32)}
                 height={Dim.heightScale(10)}
-                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
-                couleur2={Couleur.getRGBColorFromGradient(gradient, jourSelectionne)}
+                couleur={theme.colors.dark}
+                couleur2={theme.colors.dark}
                 onSubmit={(value: number) => {
                     nbOeufsInput.current = value
                 }}
@@ -473,7 +446,7 @@ export default function Oeufs({route, navigation}: Props) {
                 posy={bottomPos}
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
+                couleur={theme.colors.dark}
                 texte={'Non récoltés'}
                 onPress={() => {
                     if (authContext.user) {
