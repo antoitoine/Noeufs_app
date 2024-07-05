@@ -1,16 +1,16 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { AuthContext, StackParamList } from "../../App";
+import { StackParamList } from "../../App";
 import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { useContext, useRef, useState } from "react";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth } from "../../firebase";
 import * as Dim from '../Utils/Dimensions'
 import * as Couleur from '../Utils/Couleurs'
 import { ThemeContext } from "../Contexts/ThemeContext";
+import { AuthContext } from "../Contexts/AuthContext";
 
 
 type Props = NativeStackScreenProps<StackParamList, 'Compte'>
@@ -25,7 +25,6 @@ export default function Compte({route, navigation}: Props) {
     const name = useRef("");
 
     const authContext = useContext(AuthContext)!
-    const [user, setUser] = authContext.user
 
     const insets = useSafeAreaInsets()
 
@@ -47,7 +46,7 @@ export default function Compte({route, navigation}: Props) {
                 displayName: name.current
             }).then(() => {
                 console.log('Name updated !')
-                setUser(u)
+                authContext.setUser(u)
             }).catch((error) => {
                 console.error('ERREUR : ' + error.code + ' ' + error.message)
             })
@@ -63,7 +62,7 @@ export default function Compte({route, navigation}: Props) {
         signInWithEmailAndPassword(auth, email.current, password.current).then((userCredential) => {
             const u = userCredential.user;
             console.log('User signed in : ' + u.email);
-            setUser(u)
+            authContext.setUser(u)
         }).catch((error) => {
             const errorCode = error.code;
             const errorMessage = error.message;
@@ -127,12 +126,12 @@ export default function Compte({route, navigation}: Props) {
 
     /* Render */
 
-    if (user) {
+    if (authContext.user) {
         return (
             <View style={[connectedStyles.wrapper, {paddingBottom: insets.bottom}]}>
                 <View style={connectedStyles.upperPart}>
                     <Text style={[connectedStyles.helloMessage, {color: interactiveColor}]}>
-                        Connecté en tant que {user.displayName} !
+                        Connecté en tant que {authContext.user.displayName} !
                     </Text>
                 </View>
                 <View style={connectedStyles.lowerPart}>
@@ -141,7 +140,7 @@ export default function Compte({route, navigation}: Props) {
                             signOut(auth).then(() => {
                                 console.log('Utilisateur déconnecté.')
                                 
-                                setUser(null)
+                                authContext.setUser(null)
                             }).catch((error) => {
                                 console.error('ERREUR : ' + error)
                             })

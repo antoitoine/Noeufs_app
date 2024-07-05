@@ -1,10 +1,10 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { createContext, useEffect, useState } from "react";
-import { User, onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase";
+import { createContext } from "react";
+import { User } from "firebase/auth";
 import MainNavigatorContainer from "./src/Pages/MainNavigator/MainNavigatorContainer";
 import { ThemeProvider } from "./src/Contexts/ThemeContext";
+import { AuthProvider } from "./src/Contexts/AuthContext";
 
 export type StackParamList = {
     Oeufs: undefined,
@@ -16,47 +16,19 @@ export type StackParamList = {
     Statistiques: undefined
 }
 
-type authContextType = {
-    user: [user: User | null, setUser: Function]
-}
-
-export const AuthContext = createContext<authContextType | null>(null)
-
 /**
  * Point d'entrée de l'application mobile
  */
 export default function App() {
-
-    /* Auth context */
-
-    const [authContext, setAuthContext] = useState<{user: User | null}>({user: null})
-
-    function setUser(u: User | null) {
-        setAuthContext({user: u})
-    }
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log('User connected : ' + user.email + ' ' + user.displayName)
-                setUser(user)
-            } else {
-                setUser(null)
-            }
-        })
-    }, [])
-
     return (
         <SafeAreaProvider>
-        <AuthContext.Provider value={{
-            user: [authContext.user, setUser]
-        }}>
+        <AuthProvider>
         <ThemeProvider>
         <GestureHandlerRootView>
             <MainNavigatorContainer />
         </GestureHandlerRootView>
         </ThemeProvider>
-        </AuthContext.Provider>
+        </AuthProvider>
         </SafeAreaProvider>
     )
 }

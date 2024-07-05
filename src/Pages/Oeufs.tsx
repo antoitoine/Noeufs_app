@@ -2,7 +2,7 @@ import { PlatformColor, StyleSheet, Text, View, TouchableOpacity, TextInput, Ani
 import * as Dim from '../Utils/Dimensions';
 import * as Couleur from '../Utils/Couleurs';
 import { useContext, useEffect, useRef, useState } from "react";
-import { AuthContext, StackParamList } from "../../App";
+import { StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import Swipeable  from "react-native-gesture-handler/Swipeable";
 import { PanGestureHandler } from "react-native-gesture-handler";
@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 import moment from "moment";
 import { ThemeContext } from "../Contexts/ThemeContext";
+import { AuthContext } from "../Contexts/AuthContext";
 
 // Paramètres
 
@@ -98,7 +99,6 @@ export default function Oeufs({route, navigation}: Props) {
     /* Database & Auth */
 
     const authContext = useContext(AuthContext)!
-    const [user, ] = authContext.user
 
     const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(nb_disques))
     const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(nb_disques))
@@ -106,17 +106,17 @@ export default function Oeufs({route, navigation}: Props) {
     const nbOeufsInput = useRef<number | null>(null)
 
     useEffect(() => { // Connexion à un utilisateur
-        if (user !== null) {
-            console.log(user)
-            console.log('User connected : ' + user.email + ' ' + user.displayName) // Connexion
-            console.log(user.uid)
+        if (authContext.user !== null) {
+            console.log(authContext.user)
+            console.log('User connected : ' + authContext.user.email + ' ' + authContext.user.displayName) // Connexion
+            console.log(authContext.user.uid)
 
             console.log('Synchronisation des données...')
             try {
                 AsyncStorage.getItem('oeufsStorage').then(async(value) => {
                     const localData = value !== null ? JSON.parse(value) : {}
 
-                    get(ref(database, 'users/' + user.uid + '/oeufs')).then((snapshot) => {
+                    get(ref(database, 'users/' + authContext.user!.uid + '/oeufs')).then((snapshot) => {
 
                         const onlineData = snapshot.val() !== null ? snapshot.val() : {}
 
@@ -135,7 +135,7 @@ export default function Oeufs({route, navigation}: Props) {
                             }
                         }
 
-                        set(ref(database, '/users/' + user.uid + '/oeufs'), mergedData)
+                        set(ref(database, '/users/' + authContext.user!.uid + '/oeufs'), mergedData)
                     }).catch((error) => {
                         console.error('FIREBASE ERROR : ' + error)
                     })
@@ -151,11 +151,11 @@ export default function Oeufs({route, navigation}: Props) {
                 console.error(e)
             }
         }
-    }, [user])
+    }, [authContext.user])
     
     useEffect(() => { // Récupération des données du mois
-        if (user !== null) {
-            return onValue(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
+        if (authContext.user !== null) {
+            return onValue(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
                 const data = snapshot.val()
                 console.log('Récupération des données')
                 if (data) {
@@ -216,7 +216,7 @@ export default function Oeufs({route, navigation}: Props) {
 
             
         }
-    }, [moisSelectionne, user])
+    }, [moisSelectionne, authContext.user])
 
     console.log('HEADER HEIGHT : ' + theme.headerHeight + ' ' + Dim.heightScale(7))
 
@@ -424,8 +424,8 @@ export default function Oeufs({route, navigation}: Props) {
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Réinitialiser'}
                 onPress={() => {
-                    if (user) {
-                        remove(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
+                    if (authContext.user) {
+                        remove(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
                     }
                     removeDayData()
                 }}
@@ -441,8 +441,8 @@ export default function Oeufs({route, navigation}: Props) {
                 onPress={() => {
                     Keyboard.dismiss()
                     if (!Number.isNaN(nbOeufsInput.current)) {
-                        if (user) {
-                            set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
+                        if (authContext.user) {
+                            set(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
                                 nbOeufs: nbOeufsInput.current
                             }).catch(error => {
                                 console.error('FIREBASE ERROR : set nb oeufs - ' + error)
@@ -476,8 +476,8 @@ export default function Oeufs({route, navigation}: Props) {
                 couleur={Couleur.getRGBColorFromGradient(gradient2, jourSelectionne)}
                 texte={'Non récoltés'}
                 onPress={() => {
-                    if (user) {
-                        set(ref(database, 'users/' + user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
+                    if (authContext.user) {
+                        set(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
                             nbOeufs: -1
                         })
                     }

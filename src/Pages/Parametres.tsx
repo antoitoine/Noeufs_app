@@ -1,6 +1,6 @@
 import { Alert, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Dim from '../Utils/Dimensions';
-import { AuthContext, StackParamList } from "../../App";
+import { StackParamList } from "../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useContext, useEffect, useRef, useState } from "react";
 import { User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
 import { DEGRADES, FAKE_WHITE } from "../Constantes/Couleurs";
 import { ThemeContext } from "../Contexts/ThemeContext";
+import { AuthContext } from "../Contexts/AuthContext";
 
 type Props = NativeStackScreenProps<StackParamList, 'Settings'>;
 
@@ -20,9 +21,6 @@ export default function Parametres({route, navigation}: Props) {
 
     const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], theme.nbJours)
     const interactiveColor = Couleur.getRGBColorFromGradient(gradient, theme.idJour)
-
-    const authContext = useContext(AuthContext)!
-    const [user, ] = authContext.user
 
     const pages = [
         {id: 'Historique', title: 'Historique'},

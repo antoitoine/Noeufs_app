@@ -1,5 +1,5 @@
+import { AuthContext } from "../../Contexts/AuthContext";
 import MainNavigatorComponent from "./MainNavigatorComponent";
-import { AuthContext } from "../../../App";
 import { useContext } from "react";
 
 type MainNavigatorContainerProps = {
@@ -7,7 +7,7 @@ type MainNavigatorContainerProps = {
 }
 
 function MainNavigatorContainer({}: MainNavigatorContainerProps) {
-    const [user, ] = useContext(AuthContext)!.user
+    const user = useContext(AuthContext)!.user
 
     return (
         <MainNavigatorComponent
