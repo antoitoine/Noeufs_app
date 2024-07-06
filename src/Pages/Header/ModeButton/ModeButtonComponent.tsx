@@ -2,9 +2,6 @@ import { GestureResponderEvent, Image, StyleSheet, Text, TouchableOpacity } from
 import { EdgeInsets } from "react-native-safe-area-context"
 import * as Dim from '../../../Utils/Dimensions'
 import { HeaderButtonProps } from "@react-navigation/elements"
-import { useState } from "react"
-import { FAKE_WHITE } from "../../../Constantes/Couleurs"
-import { MODES_OEUFS } from "../../Oeufs"
 
 type ModeButtonComponentType = {
     onPress: (event: GestureResponderEvent) => void
@@ -12,15 +9,22 @@ type ModeButtonComponentType = {
     mode: number
 }
 
+const images = [
+    require('../../../Images/Poule.png'),
+    require('../../../Images/Caille.png'),
+    require('../../../Images/Oie.png'),
+    require('../../../Images/Canard.png'),
+]
+
 function ModeButtonComponent({onPress, insets, mode}: ModeButtonComponentType & HeaderButtonProps) {
-    
+
     return (
         <TouchableOpacity
             style={[styles.headerModeButton, {top: insets.top + Dim.heightScale(1)}]}
             activeOpacity={0.8}
             onPress={onPress}
         >
-            <Text style={[styles.headerModeButtonText]}>{MODES_OEUFS[mode].charAt(0)}</Text>
+            <Image source={(images[mode])} style={[styles.modeImage]} />
         </TouchableOpacity>
     )
 }
@@ -28,20 +32,25 @@ function ModeButtonComponent({onPress, insets, mode}: ModeButtonComponentType & 
 const styles = StyleSheet.create({
     headerModeButton: {
         position: 'absolute',
-        backgroundColor: FAKE_WHITE,
         left: Dim.heightScale(1),
         top: Dim.heightScale(1),
         height: Dim.heightScale(5),
         width: Dim.heightScale(5),
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: Dim.scale(1)
     },
     headerModeButtonText: {
         color: 'black',
         fontSize: Dim.scale(5),
         fontWeight: 'bold',
         textAlign: 'center'
+    },
+    modeImage: {
+        position: 'relative',
+        top: 0,
+        left: 0,
+        height: Dim.heightScale(5),
+        aspectRatio: 1
     }
 })
 

@@ -8,7 +8,7 @@ type SettingsButtonComponentProps = {
     insets: EdgeInsets
 }
 
-function SettingsButtonComponent({onPress, insets, canGoBack, pressColor, pressOpacity, tintColor}: SettingsButtonComponentProps & HeaderButtonProps) {
+function SettingsButtonComponent({onPress, insets}: SettingsButtonComponentProps & HeaderButtonProps) {
     return (
         <TouchableOpacity
             style={styles.settingsWrapper}

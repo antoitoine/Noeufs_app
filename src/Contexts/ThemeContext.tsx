@@ -45,6 +45,7 @@ function ThemeProvider({children}: ThemeProviderProps) {
     const [mode, setMode] = useState(0)
     const [colors, setColors] = useState({light: 'blue', dark: 'green'})
 
+    // Charge le backgroundColor depuis AsyncStorage
     useEffect(() => {
         AsyncStorage.getItem('userPreferences').then((value) => {
             if (value !== null) {
@@ -53,19 +54,23 @@ function ThemeProvider({children}: ThemeProviderProps) {
         })
     }, [])
 
+    // Enregistre dans AsyncStorage le nouveau backgroundColor à chaque changement (menu personnalisation)
     useEffect(() => {
         AsyncStorage.setItem('userPreferences', JSON.stringify({
             'backgroundColor': backgroundColor
         }))
 
+    }, [backgroundColor])
+
+    // Change les couleurs (colors.light et colors.dark) à chaque changement de jour selectionné ou de backgroundColor
+    useEffect(() => {
         const lightGradient = degradeCouleur(DEGRADES[backgroundColor][0], DEGRADES[backgroundColor][1], nbJours)
         const lightColor = getRGBColorFromGradient(lightGradient, idJour)
         const darkGradient = degradeCouleur(DEGRADES[backgroundColor][2], DEGRADES[backgroundColor][3], nbJours)
         const darkColor = getRGBColorFromGradient(darkGradient, idJour)
 
         setColors({light: lightColor, dark: darkColor})
-
-    }, [backgroundColor])
+    }, [idJour, backgroundColor])
 
     return (
         <ThemeContext.Provider value={{

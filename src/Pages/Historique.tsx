@@ -1,10 +1,10 @@
-import { Dimensions, ListRenderItem, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as Dim from "../Utils/Dimensions"
 import { FAKE_WHITE } from "../Constantes/Couleurs";
 import { FlatList } from "react-native-gesture-handler";
 import { useContext, useEffect, useState } from "react";
-import { NOMS_JOURS, NOMS_MOIS, date } from "../Utils/Date";
+import { NOMS_JOURS } from "../Utils/Date";
 import moment from "moment"
 import 'moment/min/locales'
 import { ThemeContext } from "../Contexts/ThemeContext";

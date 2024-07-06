@@ -55,6 +55,7 @@ export default function Oeufs({route, navigation}: Props) {
 
     useEffect(() => {
         theme.setIdJour(jourSelectionne)
+        console.log(theme.colors)
     }, [jourSelectionne])
 
     useEffect(() => {
