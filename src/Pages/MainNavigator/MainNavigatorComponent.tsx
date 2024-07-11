@@ -17,6 +17,7 @@ import SettingsButtonContainer from "../Header/SettingsButton/SettingsButtonCont
 import { User } from "firebase/auth";
 import { ExtendedNavigationOptions } from "../../Declare/types.d";
 import ModeButtonContainer from "../Header/ModeButton/ModeButtonContainer";
+import OeufsContainer from "../Oeufs/OeufsContainer";
 
 type MainNavigatorProps = {
     user: User | null
@@ -44,7 +45,7 @@ function MainNavigatorComponent({user}: MainNavigatorProps) {
                 >
                     <Stack.Screen
                         name="Oeufs"
-                        component={Oeufs}
+                        component={OeufsContainer}
                         options={{title: 'Oeufs', headerMiddleVisible: true, headerRightVisible: true} as ExtendedNavigationOptions}
                     />
                     <Stack.Screen
