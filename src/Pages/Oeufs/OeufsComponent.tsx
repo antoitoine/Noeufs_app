@@ -6,9 +6,9 @@ import { FlatList, PanGestureHandler } from "react-native-gesture-handler";
 import { DEGRADES, FAKE_WHITE } from "../../Constantes/Couleurs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get, ref, set, onValue, remove } from "firebase/database";
-import moment from "moment";
-import React, { useState, useEffect, useRef, useContext } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import moment, { Moment } from "moment";
+import React, { useState, useEffect, useRef, useContext, SetStateAction } from "react";
+import { EdgeInsets, useSafeAreaInsets } from "react-native-safe-area-context";
 import { database } from "../../../firebase";
 import { AuthContext } from "../../Contexts/AuthContext";
 import { ThemeContext } from "../../Contexts/ThemeContext";
@@ -19,268 +19,37 @@ import Input from "./Input";
 import Jour from "./Jour";
 import * as Couleur from '../../Utils/Couleurs'
 import { taille_disque } from "./OeufsContainer";
+import { User } from "firebase/auth";
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
 type OeufsComponentProps = {
-    colors: {dark: string, light: string}
+    colors: {dark: string, light: string, darkGradient: Array<Array<number>>, lightGradient: Array<Array<number>>}
+    nbOeufs: Array<number | undefined>
+    date: moment.Moment
+    insets: EdgeInsets
+    events: {changeMonth: (decalage: number) => void, changeDay: (id: number) => void}
+    user: User | null
+    reinitialiserOeufs: () => void
+    ajouterOeufs: (quantite: number | undefined) => void
+    nbOeufsInput: React.MutableRefObject<null | number>
 }
 
-function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComponentProps) {
+function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, events, user, reinitialiserOeufs, ajouterOeufs, nbOeufsInput}: NavigationProps & OeufsComponentProps) {
 
-    const [jourSelectionne, setJourSelectionne] = useState(moment().date() - 1);
-    const [moisSelectionne, setMoisSelectionne] = useState(24 * 12 + moment().month());
-
-    const moisReel = moisSelectionne % 12
-    const anneeSelectionnee = 2000 + Math.floor(moisSelectionne / 12)
-
-    const bissextile = (anneeSelectionnee % 4 == 0 && anneeSelectionnee % 100 != 0) || (anneeSelectionnee % 400 == 0);
-    const JOURS_MOIS = [31, bissextile ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-    useEffect(() => {
-        if (moisReel === moment().month() && anneeSelectionnee === moment().year()) {
-            setJourSelectionne(moment().date() - 1)
-        } else if (jourSelectionne !== 0) {
-            setJourSelectionne(0)
-        }
-    }, [moisSelectionne]);
-
-    const translation = useRef(new Animated.Value(0)).current;
-    const nb_disques = JOURS_MOIS[moisReel]
-
-    /* Preferences */
-
-    const theme = useContext(ThemeContext)!
-
-    useEffect(() => {
-        theme.setIdJour(jourSelectionne)
-        console.log(theme.colors)
-    }, [jourSelectionne])
-
-    useEffect(() => {
-        theme.setNbJours(nb_disques)
-    }, [moisSelectionne])
-
-    const gradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], nb_disques)
-    const gradient2 = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], nb_disques)
-
-    /* Mode d'oeufs */
-
-    useEffect(() => {
-        navigation.setOptions({title: MODES_OEUFS[theme.mode]})
-    }, [theme.mode])
-
-    /* Insets */
-
-    const insets = useSafeAreaInsets()
-    const bottomPos = insets.bottom
-
-    /* Database & Auth */
-
-    const authContext = useContext(AuthContext)!
-
-    const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(nb_disques))
-    const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(nb_disques))
-
-    const nbOeufsInput = useRef<number | null>(null)
-
-    useEffect(() => { // Connexion à un utilisateur
-        if (authContext.user !== null) {
-            console.log('User connected : ' + authContext.user.email + ' ' + authContext.user.displayName) // Connexion
-            console.log(authContext.user.uid)
-
-            console.log('Synchronisation des données...')
-            try {
-                AsyncStorage.getItem('oeufsStorage').then(async(value) => {
-                    const localData = value !== null ? JSON.parse(value) : {}
-
-                    get(ref(database, 'users/' + authContext.user!.uid + '/oeufs')).then((snapshot) => {
-
-                        const onlineData = snapshot.val() !== null ? snapshot.val() : {}
-
-                        var mergedData = {}
-
-                        const keys = [...new Set([...Object.keys(onlineData), ...Object.keys(localData)])]
-                        console.log(keys)
-
-                        for (var i of keys) {
-                            mergedData = {
-                                ...mergedData,
-                                [i]: {
-                                    ...onlineData[i],
-                                    ...localData[i]
-                                }
-                            }
-                        }
-
-                        set(ref(database, '/users/' + authContext.user!.uid + '/oeufs'), mergedData)
-                    }).catch((error) => {
-                        console.error('FIREBASE ERROR : ' + error)
-                    })
-                })
-            } catch(e) {
-                console.error(e)
-            }
-        } else {
-            console.log('Déconnecté')                                                    // Déconnexion
-            try {
-                AsyncStorage.removeItem('oeufsStorage')
-            } catch(e) {
-                console.error(e)
-            }
-        }
-    }, [authContext.user])
     
-    useEffect(() => { // Récupération des données du mois
-        if (authContext.user !== null) {
-            return onValue(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne), (snapshot) => {
-                const data = snapshot.val()
-                console.log('Récupération des données')
-                if (data) {
-                    for (var i = 0; i < nb_disques; ++i) {
-                        if (data[i] !== undefined) {
-                            nbOeufsParJour_ref.current[i] = data[i]['nbOeufs']
-                        } else {
-                            nbOeufsParJour_ref.current[i] = undefined
-                        }
-                        
-                    }
-                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
-                } else {
-                    console.log('Aucun oeuf dans le mois')
-                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
-                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
-                }
-            }, (error) => {
-                console.error(error.message)
-            })
-        } else {
-            console.log('Pas d\'utilisateur connecté')
-            
-            AsyncStorage.getItem('oeufsStorage').then((value) => {
-                console.log('getItem')
-                const v = value !== null ? JSON.parse(value) : null
-
-                if (v !== null) { // oeufsStorage existe
-                    console.log('oeufsStorage existe')
-                    const m = moisSelectionne.toString()
-                    if (m in v) { // Mois contient des oeufs
-                        console.log('Mois contient des oeufs')
-                        for (var i = 0; i < nb_disques; ++i) {
-                            if (i.toString() in v[m]) {
-                                nbOeufsParJour_ref.current[i] = v[m][i.toString()].nbOeufs
-                            } else {
-                                nbOeufsParJour_ref.current[i] = undefined
-                            }
-                        }
-                    } else { // Mois ne contient pas d'oeufs
-                        console.log('Mois ne contient pas d\'oeufs')
-                        nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
-                    }
-                } else { // oeufsStorage n'existe pas
-                    console.log('oeufs storage n\'existe pas')
-                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
-                }
-
-                console.log('Update nbOeufs...')
-
-                setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
-                
-            }).catch(error => {
-                console.error(error)
-            })
-
-            
-        }
-    }, [moisSelectionne, authContext.user])
-
-    console.log('HEADER HEIGHT : ' + theme.headerHeight + ' ' + Dim.heightScale(7))
-
-    /* Async storage */
-
-    const removeDayData = async() => {
-        console.log('removeData')
-
-        try {
-            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
-                var json_value = res !== null ? JSON.parse(res) : null
-                const j = jourSelectionne.toString()
-                const m = moisSelectionne.toString()
-
-                if (json_value !== null && m in json_value && j in json_value[m]) {
-                    delete json_value[m][j]
-                }
-
-                try {
-                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
-                        nbOeufsParJour_ref.current[jourSelectionne] = undefined
-                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
-                    })
-                } catch(e) {
-                    console.error(e)
-                }
-            })
-        } catch(e) {
-            console.error(e)
-        }
-    }
-
-    const setData = async(value: string) => {
-        try {
-            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
-                var json_value = res !== null ? JSON.parse(res) : null
-                const j = jourSelectionne.toString()
-                const m = moisSelectionne.toString()
-
-                if (json_value !== null) {
-                    if (m in json_value) {
-                        if (j in json_value[m]) { // Mois + jour
-                            json_value[m][j].nbOeufs = value
-                        } else { // Mois
-                            json_value[m] = {
-                                ...json_value[m],
-                                [j]: {"nbOeufs": value}
-                            }
-                        }
-                    } else { // Aucun
-                        json_value[m] = {
-                            [j]: {"nbOeufs": value}
-                        }
-                    }
-                } else { // Première connexion ? Pas de oeufsStorage
-                    console.log('Aucune donnée... Création de oeufsStorage')
-                    json_value = {
-                        [m]: {
-                            [j]: {"nbOeufs": value}
-                        }
-                    }
-                }
-
-                console.log('Set : ' + JSON.stringify(json_value))
-                try {
-                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
-                        console.log('Data set')
-                        nbOeufsParJour_ref.current[jourSelectionne] = parseInt(value)
-                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
-                    })
-                } catch(e) {
-                    console.error(e)
-                }
-            })
-        } catch(e) {
-            console.error(e)
-        }
-    }
 
     /* Calcul affichage du nombre d'oeufs */
 
-    var nbOeufs_text = ''
-    const nbOeufs_jour = nbOeufsParJour[jourSelectionne]
+    const translation = useRef(new Animated.Value(0)).current;
 
-    if (nbOeufs_jour === undefined) nbOeufs_text = '?'
-    else if (nbOeufs_jour < 0)      nbOeufs_text = 'Pas de récolte'
-    else if (nbOeufs_jour <= 1)     nbOeufs_text = nbOeufs_jour + ' Oeuf'
-    else                            nbOeufs_text = nbOeufs_jour + ' Oeufs'
+    var nbOeufs_text = ''
+
+
+    if (nbOeufs[date.date()] === undefined) nbOeufs_text = '?'
+    else if (nbOeufs[date.date()]! < 0)      nbOeufs_text = 'Pas de récolte'
+    else if (nbOeufs[date.date()]! <= 1)     nbOeufs_text = nbOeufs[date.date()] + ' Oeuf'
+    else                            nbOeufs_text = nbOeufs[date.date()] + ' Oeufs'
 
     function showDays(position: Animated.AnimatedInterpolation<string | number>) {
         return (
@@ -295,21 +64,24 @@ function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComp
             >
                 
                 <View style={styles.affichageOeufs}>
-                    <Text style={[styles.affichageOeufsText, {color: theme.colors.dark}]}>
+                    <Text style={[styles.affichageOeufsText, {color: colors.dark}]}>
                         {nbOeufs_text}
                     </Text>
                 </View>
                 {
-                    [...Array(nb_disques).keys()].map((i: number) => {
-    
-                        const angle = i * 2 * Math.PI / nb_disques;
+                    [...Array(date.daysInMonth()).keys()].map((i: number) => {
+
+                        const day = i + 1
+
+                        const angle = day * 2 * Math.PI / date.daysInMonth();
                         const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
                         const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;
                         
-                        const color = Couleur.getRGBColorFromGradient(nbOeufsParJour[i] !== undefined ? gradient2 : gradient, i)
+                        const color = Couleur.getRGBColorFromGradient(nbOeufs[day] !== undefined ? colors.darkGradient : colors.lightGradient, day-1)
+                        //const color = nbOeufs.parJour[i] !== undefined ? colors.darkGradient[i] : colors.lightGradient[i]
     
                         return (
-                            <Jour key={i} posx={posX} posy={posY} couleur={color} id={i} onPress={(id: number) => setJourSelectionne(id)} selected={i == jourSelectionne } />
+                            <Jour key={day} posx={posX} posy={posY} couleur={color} id={day} onPress={(id: number) => events.changeDay(id)} selected={day == date.date() } />
                         )
                         
                     })
@@ -327,7 +99,7 @@ function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComp
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
-            <Text style={[styles.affichageJour, {color: theme.colors.dark}]}>{jourSelectionne == 0 ? '1er' : jourSelectionne+1} {NOMS_MOIS[moisReel]} {anneeSelectionnee}</Text>
+            <Text style={[styles.affichageJour, {color: colors.dark}]}>{date.date() == 1 ? '1er' : date.date()} {date.format('MMMM YYYY')}</Text>
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -359,8 +131,8 @@ function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComp
                         }).start(() => {
                             translation.setValue(0);
 
-                            if (etat == 2) setMoisSelectionne(moisSelectionne - 1)
-                            else if (etat == 1) setMoisSelectionne(moisSelectionne + 1)
+                            if (etat == 2) events.changeMonth(- 1)
+                            else if (etat == 1) events.changeMonth(+ 1)
                         });
                     }}
                 >
@@ -391,51 +163,36 @@ function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComp
 
             <Bouton
                 posx={Dim.widthScale(2)}
-                posy={bottomPos}
+                posy={50} // Bottom pos
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={theme.colors.dark}
+                couleur={colors.dark}
                 texte={'Réinitialiser'}
                 onPress={() => {
-                    if (authContext.user) {
-                        remove(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne))
-                    }
-                    removeDayData()
+                    reinitialiserOeufs()
                 }}
             />
 
             <Bouton
                 posx={Dim.widthScale(2)}
-                posy={bottomPos + Dim.heightScale(11)}
+                posy={50 + Dim.heightScale(11)} // bottom pos
                 width={Dim.widthScale(96)}
                 height={Dim.heightScale(5)}
-                couleur={theme.colors.dark}
+                couleur={colors.dark}
                 texte="Valider"
                 onPress={() => {
                     Keyboard.dismiss()
-                    if (!Number.isNaN(nbOeufsInput.current)) {
-                        if (authContext.user) {
-                            set(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                                nbOeufs: nbOeufsInput.current
-                            }).catch(error => {
-                                console.error('FIREBASE ERROR : set nb oeufs - ' + error)
-                            })
-                        }
-                        setData(nbOeufsInput.current!.toString())
-                    } else {
-                        console.log('Nombre entré incorrect')
-                    }
-                    
+                    ajouterOeufs(nbOeufsInput.current!)
                 }}
             />
 
             <Input
                 posx={Dim.widthScale(34)}
-                posy={bottomPos}
+                posy={50} // Bottom pos
                 width={Dim.widthScale(32)}
                 height={Dim.heightScale(10)}
-                couleur={theme.colors.dark}
-                couleur2={theme.colors.dark}
+                couleur={colors.dark}
+                couleur2={colors.dark}
                 onSubmit={(value: number) => {
                     nbOeufsInput.current = value
                 }}
@@ -443,18 +200,13 @@ function OeufsComponent({route, navigation, colors}: NavigationProps & OeufsComp
 
             <Bouton
                 posx={Dim.widthScale(68)}
-                posy={bottomPos}
+                posy={50} // Bottom pos
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
-                couleur={theme.colors.dark}
+                couleur={colors.dark}
                 texte={'Non récoltés'}
                 onPress={() => {
-                    if (authContext.user) {
-                        set(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + moisSelectionne + '/' + jourSelectionne), {
-                            nbOeufs: -1
-                        })
-                    }
-                    setData("-1")
+                    ajouterOeufs(-1)
                 }}
             />
 

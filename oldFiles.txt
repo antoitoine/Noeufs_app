@@ -1,0 +1,233 @@
+    const [dateSelectionnee, setDateSelectionnee] = useState(moment())
+
+    useEffect(() => {
+        moment.updateLocale('fr', null)
+    }, [])
+
+    console.log(dateSelectionnee.format('DD/MM/YYYY HH:mm:ss'))
+
+    /* Preferences */
+
+    const theme = useContext(ThemeContext)!
+
+    useEffect(() => {
+        theme.setIdJour(dateSelectionnee.date()-1)
+        console.log(theme.colors)
+    }, [dateSelectionnee.date()])
+
+    useEffect(() => {
+        theme.setNbJours(dateSelectionnee.daysInMonth())
+    }, [dateSelectionnee.month()])
+
+    const lightGradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], dateSelectionnee.daysInMonth())
+    const darkGradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], dateSelectionnee.daysInMonth())
+
+    /* Mode d'oeufs */
+
+    useEffect(() => {
+        navigation.setOptions({title: MODES_OEUFS[theme.mode]})
+    }, [theme.mode])
+
+    /* Insets */
+
+    const insets = useSafeAreaInsets()
+    const bottomPos = insets.bottom
+
+    /* Database & Auth */
+
+    const authContext = useContext(AuthContext)!
+
+    const [nbOeufsParJour, setNbOeufsParJour] = useState<number[] | undefined[]>(Array(dateSelectionnee.daysInMonth()))
+    const nbOeufsParJour_ref = useRef<number[] | undefined[]>(Array(dateSelectionnee.daysInMonth()))
+
+    const nbOeufsInput = useRef<number | null>(null)
+
+    useEffect(() => { // Connexion à un utilisateur
+        if (authContext.user !== null) {
+            console.log('User connected : ' + authContext.user.email + ' ' + authContext.user.displayName) // Connexion
+            console.log(authContext.user.uid)
+
+            console.log('Synchronisation des données...')
+            try {
+                AsyncStorage.getItem('oeufsStorage').then(async(value) => {
+                    const localData = value !== null ? JSON.parse(value) : {}
+
+                    get(ref(database, 'users/' + authContext.user!.uid + '/oeufs')).then((snapshot) => {
+
+                        const onlineData = snapshot.val() !== null ? snapshot.val() : {}
+
+                        var mergedData = {}
+
+                        const keys = [...new Set([...Object.keys(onlineData), ...Object.keys(localData)])]
+                        console.log(keys)
+
+                        for (var i of keys) {
+                            mergedData = {
+                                ...mergedData,
+                                [i]: {
+                                    ...onlineData[i],
+                                    ...localData[i]
+                                }
+                            }
+                        }
+
+                        set(ref(database, '/users/' + authContext.user!.uid + '/oeufs'), mergedData)
+                    }).catch((error) => {
+                        console.error('FIREBASE ERROR : ' + error)
+                    })
+                })
+            } catch(e) {
+                console.error(e)
+            }
+        } else {
+            console.log('Déconnecté')                                                    // Déconnexion
+            try {
+                AsyncStorage.removeItem('oeufsStorage') // ?? TODO
+            } catch(e) {
+                console.error(e)
+            }
+        }
+    }, [authContext.user])
+    
+    // TODO : database -> /oeufs/YYYY-MM
+
+    useEffect(() => { // Récupération des données du mois
+        if (authContext.user !== null) {
+            return onValue(ref(database, 'users/' + authContext.user.uid + '/oeufs/' + dateSelectionnee.format('YYYY-MM')), (snapshot) => {
+                const data = snapshot.val()
+                console.log('Récupération des données')
+                if (data) {
+                    for (var i = 0; i < dateSelectionnee.daysInMonth(); ++i) {
+                        if (data[i] !== undefined) {
+                            nbOeufsParJour_ref.current[i] = data[i]['nbOeufs']
+                        } else {
+                            nbOeufsParJour_ref.current[i] = undefined
+                        }
+                        
+                    }
+                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                } else {
+                    console.log('Aucun oeuf dans le mois')
+                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                    setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                }
+            }, (error) => {
+                console.error(error.message)
+            })
+        } else {
+            console.log('Pas d\'utilisateur connecté')
+            
+            AsyncStorage.getItem('oeufsStorage').then((value) => {
+                console.log('getItem')
+                const v = value !== null ? JSON.parse(value) : null
+
+                if (v !== null) { // oeufsStorage existe
+                    console.log('oeufsStorage existe')
+                    const m = dateSelectionnee.format('YYYY-MM') // ATTENTION
+                    if (m in v) { // Mois contient des oeufs
+                        console.log('Mois contient des oeufs')
+                        for (var i = 0; i < dateSelectionnee.daysInMonth(); ++i) {
+                            if (i.toString() in v[m]) {
+                                nbOeufsParJour_ref.current[i] = v[m][i.toString()].nbOeufs
+                            } else {
+                                nbOeufsParJour_ref.current[i] = undefined
+                            }
+                        }
+                    } else { // Mois ne contient pas d'oeufs
+                        console.log('Mois ne contient pas d\'oeufs')
+                        nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                    }
+                } else { // oeufsStorage n'existe pas
+                    console.log('oeufs storage n\'existe pas')
+                    nbOeufsParJour_ref.current = new Array(nbOeufsParJour_ref.current.length).fill(undefined)
+                }
+
+                console.log('Update nbOeufs...')
+
+                setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                
+            }).catch(error => {
+                console.error(error)
+            })
+
+            
+        }
+    }, [dateSelectionnee.month(), authContext.user])
+
+    console.log(nbOeufsParJour)
+
+    /* Async storage */
+
+    const removeDayData = async() => {
+        console.log('removeData')
+
+        try {
+            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
+                var json_value = res !== null ? JSON.parse(res) : null
+                const j = dateSelectionnee.date().toString() // ATTENTION : INDICE DU JOUR
+                const m = dateSelectionnee.month().toString() // ATTENTION : INDICE DU MOIS
+
+                if (json_value !== null && m in json_value && j in json_value[m]) {
+                    delete json_value[m][j]
+                }
+
+                try {
+                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
+                        nbOeufsParJour_ref.current[dateSelectionnee.date()] = undefined // ATTENTION
+                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                    })
+                } catch(e) {
+                    console.error(e)
+                }
+            })
+        } catch(e) {
+            console.error(e)
+        }
+    }
+
+    const setData = async(value: string) => {
+        try {
+            AsyncStorage.getItem('oeufsStorage').then(async(res) => {
+                var json_value = res !== null ? JSON.parse(res) : null
+                const j = dateSelectionnee.date().toString() // ATTENTION : INDICE DU JOUR
+                const m = dateSelectionnee.month().toString()
+
+                if (json_value !== null) {
+                    if (m in json_value) {
+                        if (j in json_value[m]) { // Mois + jour
+                            json_value[m][j].nbOeufs = value
+                        } else { // Mois
+                            json_value[m] = {
+                                ...json_value[m],
+                                [j]: {"nbOeufs": value}
+                            }
+                        }
+                    } else { // Aucun
+                        json_value[m] = {
+                            [j]: {"nbOeufs": value}
+                        }
+                    }
+                } else { // Première connexion ? Pas de oeufsStorage
+                    console.log('Aucune donnée... Création de oeufsStorage')
+                    json_value = {
+                        [m]: {
+                            [j]: {"nbOeufs": value}
+                        }
+                    }
+                }
+
+                console.log('Set : ' + JSON.stringify(json_value))
+                try {
+                    await AsyncStorage.setItem('oeufsStorage', JSON.stringify(json_value)).then(() => {
+                        console.log('Data set')
+                        nbOeufsParJour_ref.current[dateSelectionnee.date()] = parseInt(value) // ATTTENTION ID JOUR
+                        setNbOeufsParJour(nbOeufsParJour_ref.current.slice())
+                    })
+                } catch(e) {
+                    console.error(e)
+                }
+            })
+        } catch(e) {
+            console.error(e)
+        }
+    }
