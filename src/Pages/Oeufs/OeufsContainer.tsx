@@ -1,13 +1,16 @@
+
+
+/* IMPORTS */
+
+
 import { StackParamList } from "../../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 import OeufsComponent from "./OeufsComponent";
 import { ThemeContext } from "../../Contexts/ThemeContext";
 import * as Dim from '../../Utils/Dimensions'
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { get, ref, set, onValue, remove } from "firebase/database";
-import moment, { Moment } from "moment";
-import { Animated } from "react-native";
+import { get, ref, set, remove } from "firebase/database";
+import moment from "moment";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { database } from "../../../firebase";
 import { DEGRADES } from "../../Constantes/Couleurs";
@@ -17,17 +20,35 @@ import * as Couleur from '../../Utils/Couleurs'
 import 'moment/locale/fr'
 import { User } from "firebase/auth";
 
+
+
+/* EXPORTS */
+
+
+
 export const taille_disque = Dim.scale(6);
+
+
+
+/* PAGE PRINCIPALE */
+
+
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
 function OeufsContainer({route, navigation}: NavigationProps) {
 
+    /* States */
+
     const [dateChoisie, setDateChoisie] = useState(moment())
     const [nbOeufsMois, setNbOeufsMois] = useState(Array<number | undefined>(dateChoisie.daysInMonth()+1))
     const [databaseInitialized, setDatabaseInitialized] = useState(false)
 
+    /* Refs */
+
     const nbOeufsInput = useRef<number | null>(null)
+
+    /* Theme */
 
     const theme = useContext(ThemeContext)!
 
@@ -43,13 +64,11 @@ function OeufsContainer({route, navigation}: NavigationProps) {
     const lightGradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][0], DEGRADES[theme.backgroundColor][1], dateChoisie.daysInMonth())
     const darkGradient = Couleur.degradeCouleur(DEGRADES[theme.backgroundColor][2], DEGRADES[theme.backgroundColor][3], dateChoisie.daysInMonth())
 
-    /* Mode d'oeufs */
+    /* Header */
 
     useEffect(() => {
         navigation.setOptions({title: MODES_OEUFS[theme.mode]})
     }, [theme.mode])
-
-    /* Insets */
 
     const insets = useSafeAreaInsets()
 
@@ -63,7 +82,9 @@ function OeufsContainer({route, navigation}: NavigationProps) {
 
     useEffect(() => {
         updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized)
-    }, [nbOeufsMois.entries()])
+    }, [nbOeufsMois])
+
+    /* Render */
 
     return (
         <OeufsComponent
@@ -78,9 +99,8 @@ function OeufsContainer({route, navigation}: NavigationProps) {
                 ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), quantite)
             }}
             reinitialiserOeufs={() => {
-                if (reinitialiserOeufsDb(dateChoisie, authContext.user)) {
-                    ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), undefined)
-                }
+                reinitialiserOeufsDb(dateChoisie, authContext.user)
+                ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), undefined)
             }}
             nbOeufs={nbOeufsMois} // ATTENTION
             events={{changeDay: (id: number) => {
@@ -96,7 +116,43 @@ function OeufsContainer({route, navigation}: NavigationProps) {
     )
 }
 
-/**
+
+
+/* STOCKAGE INTERNE */
+
+
+
+/** Ajouter Oeufs **
+ * 
+ * Modifie / ajoute un nombre d'oeufs pour le jour précisé.
+ * ATTTENTION : ne modifie que l'état interne, appeler updateOeufsDb ensuite pour modifier en ligne.
+ * @param oeufsMois Nombre d'oeufs chaque jour du mois actuel
+ * @param setNbOeufs Fonction Dispatch pour mettre à jour l'état du nombre d'oeufs par jour
+ * @param jour Jour du mois sélectionné où modifier le nombre d'oeufs
+ * @param quantite Valeur à assigner (-1 : pas de récolte, undefined : pas renseigné)
+ */
+const ajouterOeufs = (oeufsMois: Array<number | undefined>, setNbOeufs: React.Dispatch<SetStateAction<Array<number | undefined>>>, jour: number, quantite: number | undefined) => {
+    
+    console.log('Tentative d\'ajout du nombre d\'oeufs : ' + quantite)
+
+    if ((quantite && !isNaN(quantite)) || quantite === undefined) {
+        var newOeufs = oeufsMois.slice()
+        newOeufs[jour] = quantite
+        setNbOeufs(newOeufs.slice())
+        console.log('Ajout d\'oeufs réussi')
+    } else {
+        console.error('Nombre d\'oeufs entré incorrect')
+    }
+}
+
+
+
+/* BASE DE DONNÉES */
+
+
+
+/** Lire dans la db **
+ * 
  * Lis le nombre d'oeufs récoltés chaque jour du mois sélectionné, puis enregistre le résultat à l'aide de la fonction setNbOeufs.
  * 
  * @param date Date à partir de laquelle le mois est extrait
@@ -107,10 +163,10 @@ function OeufsContainer({route, navigation}: NavigationProps) {
  */
 const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetStateAction<Array<number | undefined>>>, user: User | null, setDbInit: Dispatch<SetStateAction<boolean>>) => {
 
-    console.log('[DEBUG] Fetching nbOeufs from db...')
+    console.log('Fetching nbOeufs from db...')
 
     if (!user) {
-        console.log('[DEBUG] ...No user found')
+        console.log('No user found. Can\'t fetch from db.')
         return
     }
     
@@ -128,14 +184,15 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
 
         setNbOeufs(nbOeufsMois_db.slice())
         setDbInit(true)
-        console.log('[DEBUG] ...Data feteched succesfully !')
+        console.log('Data feteched succesfully !')
 
     }).catch((error) => {
-        console.log('[ERROR]' + error)
+        console.log('Can\'t fetch data')
+        console.error(error)
     })
 }
 
-/**
+/** Enregistrer dans la db **
  * 
  * @param user Enregistre dans la db les données des oeufs associées à un utilisateur (uniquement lorsqu'un est connecté),
  * pour les enregistrer dans l'état courant.
@@ -144,7 +201,11 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
  * @returns void
  */
 const updateOeufsDb = (user: User | null, date: moment.Moment, nbOeufs: Array<number | undefined>, dbInit: boolean) => {
+
+    console.log('Tries to save current eggs to database...')
+
     if (!user || !dbInit) {
+        console.log('No user connected or database not ready yet. Can\'t save to database')
         return
     }
 
@@ -156,12 +217,49 @@ const updateOeufsDb = (user: User | null, date: moment.Moment, nbOeufs: Array<nu
         }
     }
 
-    console.log(newData)
+    console.debug(newData)
 
-    set(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM')), newData)
+    set(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM')), newData).then(() => {
+        console.log('Data saved succesfully !')
+    }).catch(error => {
+        console.log('Can\'t save to database.')
+        console.error(error)
+    })
 }
 
-/**
+/** Supprimer dans la db **
+ * 
+ * Supprime l'entrée précisée dans la base de données.
+ * ATTENTION : Ne modifie pas l'état interne, appeler ajouterOeufs() avec quantite=undefined pour cela.
+ * @param date Date sélectionnée, pour en extraire le mois
+ * @param user Utlisateur connecté (ou non)
+ * @returns void
+ */
+const reinitialiserOeufsDb = (date: moment.Moment, user: User | null) => {
+
+    console.log('Tries to delete data from database...')
+
+    if (!user) {
+        console.log('No user connected, delete failed.')
+        return
+    }
+
+    remove(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM/') + date.date())).then(() => {
+        console.debug('Réinitialisation du nombre d\'oeufs réussie')
+    }).catch((error) => {
+        console.log('Impossible de réinitialiser le nombre d\'oeufs.')
+        console.error(error)
+    })
+}
+
+
+
+/* DATE ET NAVIGATION */
+
+
+
+/** Changer le jour sélectionné **
+ * 
  * Change le jour du mois actuel
  * 
  * @param date Date choisie actuellement, dont le mois sera extrait
@@ -172,7 +270,8 @@ const changerJourChoisi = (date: moment.Moment, setDate: React.Dispatch<SetState
     setDate(date.date(nouveauJour).clone())
 }
 
-/**
+/** Changer le mois sélectionné **
+ * 
  * Ajout ou retire un certain nombre de mois au mois sélectionné
  * 
  * @param date Date choisie actuellement, dont le mois sera extrait
@@ -192,44 +291,6 @@ const changerMoisChoisi = (date: moment.Moment, setDate: React.Dispatch<SetState
     setDate(newDate.clone())
 }
 
-/**
- * Modifie / ajoute un nombre d'oeufs pour le jour précisé.
- * ATTTENTION : ne modifie que l'état interne, appeler updateOeufsDb ensuite pour modifier en ligne.
- * @param oeufsMois Nombre d'oeufs chaque jour du mois actuel
- * @param setNbOeufs Fonction Dispatch pour mettre à jour l'état du nombre d'oeufs par jour
- * @param jour Jour du mois sélectionné où modifier le nombre d'oeufs
- * @param quantite Valeur à assigner (-1 : pas de récolte, undefined : pas renseigné)
- */
-const ajouterOeufs = (oeufsMois: Array<number | undefined>, setNbOeufs: React.Dispatch<SetStateAction<Array<number | undefined>>>, jour: number, quantite: number | undefined) => {
-    
-    if ((quantite && !isNaN(quantite)) || quantite === undefined) {
-        var newOeufs = oeufsMois.slice()
-        newOeufs[jour] = quantite
-        setNbOeufs(newOeufs.slice())
-    } else {
-        console.error('[ERREUR] Nombre d\'oeufs entré incorrect')
-    }
-}
 
-/**
- * Supprime l'entrée précisée dans la base de données.
- * ATTENTION : Ne modifie pas l'état interne, appeler ajouterOeufs() avec quantite=undefined pour cela.
- * @param date Date sélectionnée, pour en extraire le mois
- * @param user Utlisateur connecté (ou non)
- * @returns true si la réinitialisation s'est bien effectuée
- */
-const reinitialiserOeufsDb = (date: moment.Moment, user: User | null) => {
-    if (!user) {
-        return false
-    }
-
-    remove(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM/') + date.date())).then(() => {
-        console.debug('Réinitialisation du nombre d\'oeufs réussie')
-        return true
-    }).catch((error) => {
-        console.error(error)
-        return false
-    })
-}
 
 export default OeufsContainer
