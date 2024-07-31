@@ -8,17 +8,23 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 import OeufsComponent from "./OeufsComponent";
 import { ThemeContext } from "../../Contexts/ThemeContext";
-import * as Dim from '../../Utils/Dimensions'
-import { get, ref, set, remove } from "firebase/database";
+import { get, ref, set, remove, child, DataSnapshot } from "firebase/database";
 import moment from "moment";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { database } from "../../../firebase";
 import { DEGRADES } from "../../Constantes/Couleurs";
 import { AuthContext } from "../../Contexts/AuthContext";
-import { MODES_OEUFS } from "../Oeufs";
 import * as Couleur from '../../Utils/Couleurs'
 import { User } from "firebase/auth";
 import 'moment/locale/fr'
+
+
+
+/* EXPORTS */
+
+
+
+export const MODES_OEUFS = ['poules', 'cailles', 'oies', 'cannes']
 
 
 
@@ -44,7 +50,7 @@ function OeufsContainer({route, navigation}: NavigationProps) {
 
     useEffect(() => {
         moment.locale('fr')
-    })
+    }, [])
 
     /* Theme */
 
@@ -75,11 +81,11 @@ function OeufsContainer({route, navigation}: NavigationProps) {
     const authContext = useContext(AuthContext)!
 
     useEffect(() => {
-        lireOeufsDb(dateChoisie, setNbOeufsMois, authContext.user, setDatabaseInitialized)
-    }, [authContext.user, dateChoisie.month()])
+        lireOeufsDb(dateChoisie, setNbOeufsMois, authContext.user, setDatabaseInitialized, MODES_OEUFS[theme.mode])
+    }, [authContext.user, dateChoisie.month(), theme.mode])
 
     useEffect(() => {
-        updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized)
+        updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized, MODES_OEUFS[theme.mode])
     }, [nbOeufsMois])
 
     /* Render */
@@ -97,7 +103,7 @@ function OeufsContainer({route, navigation}: NavigationProps) {
                 ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), quantite)
             }}
             reinitialiserOeufs={() => {
-                reinitialiserOeufsDb(dateChoisie, authContext.user)
+                reinitialiserOeufsDb(dateChoisie, authContext.user, MODES_OEUFS[theme.mode])
                 ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), undefined)
             }}
             nbOeufs={nbOeufsMois} // ATTENTION
@@ -159,7 +165,7 @@ const ajouterOeufs = (oeufsMois: Array<number | undefined>, setNbOeufs: React.Di
  * 
  * @returns void
  */
-const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetStateAction<Array<number | undefined>>>, user: User | null, setDbInit: Dispatch<SetStateAction<boolean>>) => {
+const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetStateAction<Array<number | undefined>>>, user: User | null, setDbInit: Dispatch<SetStateAction<boolean>>, type: string) => {
 
     console.log('Fetching nbOeufs from db...')
 
@@ -169,6 +175,7 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
     }
     
     const nbOeufsMois_db = Array<number | undefined>(date.daysInMonth()+1)
+    const typeOeufs = 'oeufs_' + type
 
     get(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM'))).then((snapshot) => {
         
@@ -178,7 +185,11 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
             const snapshotData = snapshot.val()
 
             for (var day = 1; day <= date.daysInMonth(); ++day) {
-                nbOeufsMois_db[day] = snapshotData[day] ? snapshotData[day].nbOeufs : undefined
+                if (snapshotData[day] && snapshotData[day][typeOeufs]) {
+                    nbOeufsMois_db[day] = snapshotData[day][typeOeufs]
+                } else {
+                    nbOeufsMois_db[day] = undefined
+                }
             }
         } else {
             nbOeufsMois_db.fill(undefined)
@@ -202,7 +213,7 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
  * @param nbOeufs Nombre d'oeufs pour chaque jour du mois sélectionné
  * @returns void
  */
-const updateOeufsDb = (user: User | null, date: moment.Moment, nbOeufs: Array<number | undefined>, dbInit: boolean) => {
+const updateOeufsDb = async(user: User | null, date: moment.Moment, nbOeufs: Array<number | undefined>, dbInit: boolean, type: string) => {
 
     console.log('Tries to save current eggs to database...')
 
@@ -211,22 +222,40 @@ const updateOeufsDb = (user: User | null, date: moment.Moment, nbOeufs: Array<nu
         return
     }
 
-    var newData = {}
+    const typeOeufs = 'oeufs_' + type
 
-    for (var i = 1; i < nbOeufs.length; ++i) {
-        if (nbOeufs[i]) {
-            newData = {...newData, [i]: {'nbOeufs': nbOeufs[i]}}
+    try {
+        const oldDataSnapshot = await get(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM')))
+
+        if (oldDataSnapshot.exists()) {
+
+            console.log('Réussite de la lecture des données depuis la db')
+            var oldData: {[key: string]: {[key: string]: number}} = oldDataSnapshot.val()
+
+        } else {
+            console.log('Aucune donnée existante pour le mois spécifié : ' + date.format('YYYY-MM'))
+            oldData = {}
         }
-    }
 
-    console.debug(newData)
+        for (var i = 1; i < nbOeufs.length; ++i) {
+            if (nbOeufs[i] && nbOeufs[i] !== undefined) {
+                oldData[i] = {...oldData[i], [typeOeufs]: nbOeufs[i]!}
+            }
+        }
 
-    set(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM')), newData).then(() => {
-        console.log('Data saved succesfully !')
-    }).catch(error => {
-        console.log('Can\'t save to database.')
+        try {
+            await set(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM')), oldData)
+            console.log('Les données ont bien été enregistrées dans la base de données')
+
+        } catch (error) {
+            console.error('Erreur lors de l\'écriture des données')
+            console.error(error)
+        }
+
+    } catch (error) {
+        console.error('Erreur lors de la récupération des données')
         console.error(error)
-    })
+    }
 }
 
 /** Supprimer dans la db **
@@ -237,7 +266,7 @@ const updateOeufsDb = (user: User | null, date: moment.Moment, nbOeufs: Array<nu
  * @param user Utlisateur connecté (ou non)
  * @returns void
  */
-const reinitialiserOeufsDb = (date: moment.Moment, user: User | null) => {
+const reinitialiserOeufsDb = (date: moment.Moment, user: User | null, type: string) => {
 
     console.log('Tries to delete data from database...')
 
@@ -246,7 +275,9 @@ const reinitialiserOeufsDb = (date: moment.Moment, user: User | null) => {
         return
     }
 
-    remove(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM/') + date.date())).then(() => {
+    const typeOeufs = 'oeufs_' + type
+
+    remove(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM/') + date.date() + '/' + typeOeufs)).then(() => {
         console.debug('Réinitialisation du nombre d\'oeufs réussie')
     }).catch((error) => {
         console.log('Impossible de réinitialiser le nombre d\'oeufs.')
