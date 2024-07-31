@@ -17,16 +17,8 @@ import { DEGRADES } from "../../Constantes/Couleurs";
 import { AuthContext } from "../../Contexts/AuthContext";
 import { MODES_OEUFS } from "../Oeufs";
 import * as Couleur from '../../Utils/Couleurs'
-import 'moment/locale/fr'
 import { User } from "firebase/auth";
-
-
-
-/* EXPORTS */
-
-
-
-export const taille_disque = Dim.scale(6);
+import 'moment/locale/fr'
 
 
 
@@ -47,6 +39,12 @@ function OeufsContainer({route, navigation}: NavigationProps) {
     /* Refs */
 
     const nbOeufsInput = useRef<number | null>(null)
+
+    /* Language */
+
+    useEffect(() => {
+        moment.locale('fr')
+    })
 
     /* Theme */
 
@@ -78,7 +76,7 @@ function OeufsContainer({route, navigation}: NavigationProps) {
 
     useEffect(() => {
         lireOeufsDb(dateChoisie, setNbOeufsMois, authContext.user, setDatabaseInitialized)
-    }, [authContext.user])
+    }, [authContext.user, dateChoisie.month()])
 
     useEffect(() => {
         updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized)
@@ -170,16 +168,20 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
         return
     }
     
-    const nbOeufsMois_db = Array<number>(date.daysInMonth()+1)
+    const nbOeufsMois_db = Array<number | undefined>(date.daysInMonth()+1)
 
     get(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM'))).then((snapshot) => {
         
-        if (snapshot) {
+        console.debug(snapshot)
+
+        if (snapshot.exists()) {
             const snapshotData = snapshot.val()
 
             for (var day = 1; day <= date.daysInMonth(); ++day) {
                 nbOeufsMois_db[day] = snapshotData[day] ? snapshotData[day].nbOeufs : undefined
             }
+        } else {
+            nbOeufsMois_db.fill(undefined)
         }
 
         setNbOeufs(nbOeufsMois_db.slice())

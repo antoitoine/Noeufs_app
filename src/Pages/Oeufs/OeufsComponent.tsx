@@ -11,8 +11,9 @@ import Bouton from "./Bouton";
 import Input from "./Input";
 import Jour from "./Jour";
 import * as Couleur from '../../Utils/Couleurs'
-import { taille_disque } from "./OeufsContainer";
 import { User } from "firebase/auth";
+
+export const taille_disque = Dim.scale(6);
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
