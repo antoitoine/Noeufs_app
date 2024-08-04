@@ -58,7 +58,6 @@ function OeufsContainer({route, navigation}: NavigationProps) {
 
     useEffect(() => {
         theme.setIdJour(dateChoisie.date()-1)
-        console.log(theme.colors)
     }, [dateChoisie.date()])
 
     useEffect(() => {

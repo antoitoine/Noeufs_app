@@ -16,13 +16,8 @@ type ModeButtonContainerType = {
 function ModeButtonContainer({route, navigation}: ModeButtonContainerType) {
 
     const insets = useSafeAreaInsets()
-    const [click, setClick] = useState(false)
 
     const theme = useContext(ThemeContext)!
-
-    useEffect(() => {
-        console.log('test')
-    }, [click])
 
     const handlePress = (event: GestureResponderEvent) => {
         if (theme.mode + 1 >= MODES_OEUFS.length) {

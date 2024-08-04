@@ -84,68 +84,6 @@ function MainNavigatorComponent({user}: MainNavigatorProps) {
     )
 }
 
-const styles = StyleSheet.create({
-    settingsWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        right: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    settings: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    header: {
-        height: Dim.heightScale(8),
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-
-    },
-    title: {
-        textAlign: 'center',
-        textAlignVertical: 'center',
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: Dim.scale(6)
-    },
-    back: {
-        position: 'relative',
-        top: 0,
-        left: 0,
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-    },
-    backWrapper: {
-        position: 'absolute',
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        left: Dim.widthScale(2),
-        top: Dim.heightScale(1),
-    },
-    headerModeButton: {
-        position: 'absolute',
-        backgroundColor: FAKE_WHITE,
-        left: Dim.heightScale(1),
-        top: Dim.heightScale(1),
-        height: Dim.heightScale(5),
-        width: Dim.heightScale(5),
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: Dim.scale(1)
-    },
-    headerModeButtonText: {
-        color: 'black',
-        fontSize: Dim.scale(5),
-        fontWeight: 'bold',
-        textAlign: 'center'
-    }
-})
-
 // TODO : Ajouter dans le theme context - interactiveLightColor et interactiveDarkColor
 
 export default MainNavigatorComponent
