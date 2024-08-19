@@ -202,9 +202,9 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
                 width={Dim.widthScale(30)}
                 height={Dim.heightScale(10)}
                 couleur={colors.dark}
-                texte={'Non récoltés'}
+                texte={'Aucun oeuf'}
                 onPress={() => {
-                    ajouterOeufs(-1)
+                    ajouterOeufs(0)
                 }}
             />
 

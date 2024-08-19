@@ -137,7 +137,7 @@ const ajouterOeufs = (oeufsMois: Array<number | undefined>, setNbOeufs: React.Di
     
     console.log('Tentative d\'ajout du nombre d\'oeufs : ' + quantite)
 
-    if ((quantite && !isNaN(quantite)) || quantite === undefined) {
+    if ((quantite && !isNaN(quantite)) || quantite === undefined || quantite === 0) {
         var newOeufs = oeufsMois.slice()
         newOeufs[jour] = quantite
         setNbOeufs(newOeufs.slice())
@@ -183,7 +183,7 @@ const lireOeufsDb = (date: moment.Moment, setNbOeufs: React.Dispatch<React.SetSt
             const snapshotData = snapshot.val()
 
             for (var day = 1; day <= date.daysInMonth(); ++day) {
-                if (snapshotData[day] && snapshotData[day][typeOeufs]) {
+                if (snapshotData[day] && (snapshotData[day][typeOeufs] || snapshotData[day][typeOeufs] === 0)) {
                     nbOeufsMois_db[day] = snapshotData[day][typeOeufs]
                 } else {
                     nbOeufsMois_db[day] = undefined
@@ -236,7 +236,7 @@ const updateOeufsDb = async(user: User | null, date: moment.Moment, nbOeufs: Arr
         }
 
         for (var i = 1; i < nbOeufs.length; ++i) {
-            if (nbOeufs[i] && nbOeufs[i] !== undefined) {
+            if (nbOeufs[i] && (nbOeufs[i] !== undefined) || nbOeufs[i] === 0) {
                 oldData[i] = {...oldData[i], [typeOeufs]: nbOeufs[i]!}
             }
         }
