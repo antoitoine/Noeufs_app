@@ -1,4 +1,4 @@
-import { ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ListRenderItemInfo, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as Dim from "../Utils/Dimensions"
 import { FAKE_WHITE } from "../Constantes/Couleurs";
@@ -8,6 +8,8 @@ import { NOMS_JOURS } from "../Utils/Date";
 import moment from "moment"
 import 'moment/min/locales'
 import { ThemeContext } from "../Contexts/ThemeContext";
+
+const diagonalStripesSrc = require('../Images/diagonal_stripes_transparent.png')
 
 function createData(nbItems: number) {
     const data = []
@@ -75,18 +77,24 @@ export default function Historique() {
             )
         }
         else {
-            return (
-                <TouchableOpacity
-                    style={[styles.gridItem, {backgroundColor: selected ? theme.colors.dark : (selected2 ? (!tapping.isFirstTap ? 'red' : theme.colors.dark) : theme.colors.light), opacity: disabled ? 0 : 1}]}
-                    disabled={disabled}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                        onDayTap(moment(day.toString() + '/' + moisChoisi.toString() + '/' + '2024', 'DD/MM/YYYY').format('DD/MM/YYYY'))
-                    }}
-                >
-                    <Text style={[styles.gridItemText]}>{day}</Text>
-                </TouchableOpacity>
-            )
+            if (disabled || moment().isAfter(moment(day + '/' + moisChoisi + '/2024', 'DD/MM/YYYY'))) {
+                return (
+                    <TouchableOpacity
+                        style={[styles.gridItem, {backgroundColor: selected ? theme.colors.dark : (selected2 ? (!tapping.isFirstTap ? '#A93226' : theme.colors.dark) : theme.colors.light), opacity: disabled ? 0 : 1}]}
+                        disabled={disabled}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            onDayTap(moment(day.toString() + '/' + moisChoisi.toString() + '/' + '2024', 'DD/MM/YYYY').format('DD/MM/YYYY'))
+                        }}
+                    >
+                        <Text style={[styles.gridItemText]}>{day}</Text>
+                    </TouchableOpacity>
+                )
+            } else {
+                return (
+                    <Image source={diagonalStripesSrc} alt='disabled' style={[styles.gridItem, {tintColor: theme.colors.light}]} />
+                )
+            }
         }
         
     }
@@ -216,7 +224,6 @@ const styles = StyleSheet.create({
         flex: 1,
         margin: 4,
         aspectRatio: 1,
-        backgroundColor: 'red',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 4

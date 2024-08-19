@@ -11,7 +11,8 @@ export type StackParamList = {
     Compte: undefined,
     Historique: undefined,
     Animaux: undefined,
-    Statistiques: undefined
+    Statistiques: undefined,
+    Tests: undefined
 }
 
 export default function App() {

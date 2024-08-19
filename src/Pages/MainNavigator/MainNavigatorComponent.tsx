@@ -18,6 +18,7 @@ import { User } from "firebase/auth";
 import { ExtendedNavigationOptions } from "../../Declare/types.d";
 import ModeButtonContainer from "../Header/ModeButton/ModeButtonContainer";
 import OeufsContainer from "../Oeufs/OeufsContainer";
+import Tests from "../Tests";
 
 type MainNavigatorProps = {
     user: User | null
@@ -77,6 +78,11 @@ function MainNavigatorComponent({user}: MainNavigatorProps) {
                         name="Statistiques"
                         component={Statistiques}
                         options={{headerBackVisible: true, title: 'Statistiques'}}
+                    />
+                    <Stack.Screen
+                        name="Tests"
+                        component={Tests}
+                        options={{headerBackVisible: true, title: 'Tests'}}
                     />
                 </Stack.Group>
             </Stack.Navigator>

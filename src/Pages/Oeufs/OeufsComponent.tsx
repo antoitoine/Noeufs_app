@@ -12,6 +12,7 @@ import Input from "./Input";
 import Jour from "./Jour";
 import * as Couleur from '../../Utils/Couleurs'
 import { User } from "firebase/auth";
+import InformationButton from "./InformationButton";
 
 export const taille_disque = Dim.scale(6);
 
@@ -93,7 +94,11 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
+            
+
             <Text style={[styles.affichageJour, {color: colors.dark}]}>{date.date() == 1 ? '1er' : date.date()} {date.format('MMMM YYYY')}</Text>
+
+            
 
             <View style={styles.defaultPosition}>
                 <PanGestureHandler
@@ -153,7 +158,6 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
 
                 </PanGestureHandler>
             </View>
-
 
             <Bouton
                 posx={Dim.widthScale(2)}
@@ -305,7 +309,7 @@ const styles = StyleSheet.create({
         left: 0,
         width: Dim.widthScale(100),
         height: Dim.heightScale(100)
-    }
+    },
 });
 
 export default OeufsComponent

@@ -24,6 +24,7 @@ const pages = [
     {id: 'Animaux', title: 'Animaux'},
     {id: 'Compte', title: 'Mon compte'},
     {id: 'Statistiques', title: 'Statistiques'},
+    {id: 'Tests', title: 'Tests'}
 ]
 
 function SettingsComponent({route, navigation, colors}: NavigationProps & SettingsComponentProps) {
