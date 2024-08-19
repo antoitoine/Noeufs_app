@@ -10,6 +10,8 @@ import 'moment/min/locales'
 import { ThemeContext } from "../Contexts/ThemeContext";
 
 const diagonalStripesSrc = require('../Images/diagonal_stripes_transparent.png')
+const leftArrowSrc = require('../Images/left_arrow.png')
+const rightArrowSrc = require('../Images/right_arrow.png')
 
 function createData(nbItems: number) {
     const data = []
@@ -138,7 +140,7 @@ export default function Historique() {
                     setMoisChoisi(moisChoisi - 1)
                 }}
             >
-                <Text style={styles.buttonText}>{'<'}</Text>
+                <Image style={[styles.arrowImage, {tintColor: theme.colors.dark}]} source={leftArrowSrc} alt='<' />
             </TouchableOpacity>
 
             <Text style={[styles.affichageMois, {color: theme.colors.dark}]}>{moment('01/' + moisChoisi.toString() + '/2024', 'DD/MM/YYYY').format('MMMM YYYY')}</Text>
@@ -149,7 +151,7 @@ export default function Historique() {
                     setMoisChoisi(moisChoisi + 1)
                 }}
             >
-                <Text style={styles.buttonText}>{'>'}</Text>
+                <Image style={[styles.arrowImage, {tintColor: theme.colors.dark}]} source={rightArrowSrc} alt='>' />
             </TouchableOpacity>
         </View>
         
@@ -183,9 +185,10 @@ export default function Historique() {
 }
 
 const styles = StyleSheet.create({
-    buttonText: {
-        fontSize: Dim.scale(5),
-        fontWeight: 'bold'
+    arrowImage: {
+        width: Dim.scale(8),
+        height: Dim.scale(8),
+        aspectRatio: 1
     },
     header: {
         flexDirection: 'row',
