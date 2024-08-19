@@ -76,7 +76,7 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
                         //const color = nbOeufs.parJour[i] !== undefined ? colors.darkGradient[i] : colors.lightGradient[i]
     
                         return (
-                            <Jour key={day} posx={posX} posy={posY} couleur={color} id={day} onPress={(id: number) => events.changeDay(id)} selected={day == date.date() } />
+                            <Jour key={day} posx={posX} posy={posY} couleur={color} id={day} onPress={(id: number) => events.changeDay(id)} selected={day == date.date()} disabled={moment().isBefore(moment(day + '/' + (date.month()+1) + '/' + date.year(), 'DD/MM/YYYY'))} />
                         )
                         
                     })
