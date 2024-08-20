@@ -2,7 +2,7 @@ import { GestureResponderEvent, Image, StyleSheet, TouchableOpacity } from "reac
 import * as Dim from '../../../Utils/Dimensions'
 import { EdgeInsets } from "react-native-safe-area-context"
 
-const imageSource = require('../../../Images/backButton.png')
+const imageSource = require('../../../Images/back_128.png')
 
 type BackButtonComponentProps = {
     onPress: (event: GestureResponderEvent) => void
@@ -15,7 +15,7 @@ function BackButtonComponent({onPress, insets}: BackButtonComponentProps) {
             style={[styles.backWrapper]}
             onPress={onPress}
         >
-            <Image source={imageSource} style={[styles.back, {top: insets.top}]} />
+            <Image source={imageSource} style={[styles.back, {top: insets.top, tintColor: 'white'}]} />
         </TouchableOpacity>
     )
 }

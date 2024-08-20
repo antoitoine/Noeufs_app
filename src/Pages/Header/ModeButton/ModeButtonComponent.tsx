@@ -10,10 +10,10 @@ type ModeButtonComponentType = {
 }
 
 const images = [
-    require('../../../Images/Poule.png'),
-    require('../../../Images/Caille.png'),
-    require('../../../Images/Oie.png'),
-    require('../../../Images/Canard.png'),
+    require('../../../Images/poule_noir_128.png'),
+    require('../../../Images/caille_noir_128.png'),
+    require('../../../Images/oie_noir_128.png'),
+    require('../../../Images/canard_noir_128.png'),
 ]
 
 function ModeButtonComponent({onPress, insets, mode}: ModeButtonComponentType & HeaderButtonProps) {
@@ -24,7 +24,7 @@ function ModeButtonComponent({onPress, insets, mode}: ModeButtonComponentType & 
             activeOpacity={0.8}
             onPress={onPress}
         >
-            <Image source={(images[mode])} style={[styles.modeImage]} />
+            <Image source={(images[mode])} style={[styles.modeImage, {tintColor: 'white'}]} />
         </TouchableOpacity>
     )
 }

@@ -1,7 +1,7 @@
 import { Image, StyleSheet, TouchableOpacity } from "react-native";
 import * as Dim from '../../Utils/Dimensions'
 
-const disabledImageSrc = require('../../Images/diagonal_stripes_transparent.png')
+const disabledImageSrc = require('../../Images/diagonal_stripes_transparent_50.png')
 
 const taille_disque = Dim.scale(6);
 

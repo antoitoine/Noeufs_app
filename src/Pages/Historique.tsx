@@ -8,8 +8,9 @@ import { NOMS_JOURS } from "../Utils/Date";
 import moment from "moment"
 import 'moment/min/locales'
 import { ThemeContext } from "../Contexts/ThemeContext";
+import FastImage from "react-native-fast-image";
 
-const diagonalStripesSrc = require('../Images/diagonal_stripes_transparent.png')
+const diagonalStripesSrc = require('../Images/diagonal_stripes_transparent_100.png')
 const leftArrowSrc = require('../Images/left_arrow.png')
 const rightArrowSrc = require('../Images/right_arrow.png')
 
@@ -94,7 +95,11 @@ export default function Historique() {
                 )
             } else {
                 return (
-                    <Image source={diagonalStripesSrc} alt='disabled' style={[styles.gridItem, {tintColor: theme.colors.light}]} />
+                    <Image
+                        source={diagonalStripesSrc}
+                        style={[styles.gridItem, {tintColor: theme.colors.light}]}
+                        alt={'disabled'}
+                    />
                 )
             }
         }
@@ -229,7 +234,7 @@ const styles = StyleSheet.create({
         aspectRatio: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 4
+        borderRadius: 4,
     },
     gridItemText: {
         textAlign: 'center',
@@ -248,6 +253,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: Dim.scale(5),
         alignSelf: 'flex-end'
+    },
+    gridItemImage: {
+        flex: 1
     }
 })
 

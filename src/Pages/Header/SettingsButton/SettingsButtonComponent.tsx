@@ -14,7 +14,7 @@ function SettingsButtonComponent({onPress, insets}: SettingsButtonComponentProps
             style={styles.settingsWrapper}
             onPress={onPress}
         >
-            <Image source={require('../../../Images/settings_white.png')} style={[styles.settings, {top: insets.top}]} />
+            <Image source={require('../../../Images/settings_128.png')} style={[styles.settings, {top: insets.top, tintColor: 'white'}]} />
         </TouchableOpacity>
     )
 }
