@@ -1,71 +1,150 @@
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native"
+import { Dimensions, Platform, SafeAreaView, StatusBar, StyleProp, StyleSheet, useWindowDimensions, View, ViewStyle } from "react-native"
 import * as Dim from '../Utils/Dimensions'
 import { Background } from "@react-navigation/elements"
-import React from "react"
+import React, { useContext, useEffect } from "react"
+import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context"
+import { useTheme } from "@react-navigation/native"
+import { ThemeContext } from "../Contexts/ThemeContext"
+import changeNavigationBarColor, { hideNavigationBar, showNavigationBar } from "react-native-navigation-bar-color"
+import { FAKE_WHITE } from "../Constantes/Couleurs"
+
+export const STATUS_BAR_HEIGHT = StatusBar.currentHeight!
+
+export const WINDOW_HEIGHT_NO_STATUS_BAR = Platform.OS !== 'ios' && Dimensions.get('screen').height !== Dimensions.get('window').height && STATUS_BAR_HEIGHT > 24 
+? Dimensions.get('screen').height - STATUS_BAR_HEIGHT 
+: STATUS_BAR_HEIGHT > 24 
+  ? Dimensions.get('window').height - STATUS_BAR_HEIGHT 
+  : Dimensions.get('window').height + initialWindowMetrics!.insets.bottom === Dimensions.get('screen').height 
+    ? Dimensions.get('window').height - STATUS_BAR_HEIGHT 
+    : Dimensions.get('window').height
+
+var height = Dimensions.get('window').height - initialWindowMetrics!.insets.bottom - initialWindowMetrics!.insets.top - StatusBar.currentHeight!
 
 function Tests() {
-    return (
-        <View style={styles.container}>
-            <View style={[styles.vue, styles.vue1]}>
-                <View style={[styles.vue, styles.vue1_child1]}></View>
-                <Vue style={{backgroundColor: 'red'}} />
-            </View>
-            <View style={[styles.vue, styles.vue2]}></View>
-            <View style={[styles.vue, styles.vue3]}></View>
-            <View style={[styles.vue, styles.vue4]}></View>
-        </View>
-    )
-}
 
-function Vue(style: any) {
+    const insets = useSafeAreaInsets()
+
+    console.log(insets)
+
+    const theme = useContext(ThemeContext)!
+
+    useEffect(() => {
+        StatusBar.setHidden(false)
+        StatusBar.setBackgroundColor(theme.colors.dark)
+        showNavigationBar()
+        changeNavigationBarColor(FAKE_WHITE)
+        height = Dimensions.get('window').height - initialWindowMetrics!.insets.bottom - initialWindowMetrics!.insets.top - StatusBar.currentHeight!
+    }, [height])
+
     return (
-        <View style={style}></View>
+        <SafeAreaView style={styles.container}>
+            <View
+                style={styles.date}
+            >
+                <View style={styles.dateTexte}></View>
+            </View>
+            <View
+                style={styles.oeufs}
+            >
+
+            </View>
+            <View
+                style={styles.boutons}
+            >
+                <View
+                    style={[styles.boutons_lig, styles.boutons_lig1]}
+                >
+                    <View style={[styles.bouton, styles.bouton1]}></View>
+                </View>
+                <View
+                    style={styles.boutons_lig}
+                >
+                    <View style={[styles.bouton, styles.bouton2]}></View>
+                    <View style={[styles.bouton, styles.bouton3]}></View>
+                    <View style={[styles.bouton, styles.bouton4]}></View>
+                </View>
+                
+                
+            </View>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
-    newVue: {
-        backgroundColor: 'white',
-        width: 100,
-        height: 100
-    },
     container: {
         backgroundColor: 'blue',
 
-        flex: 1,
+        flexGrow: 1,
+
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        alignItems: 'stretch'
     },
-    vue: {
-        flexGrow: 100,
-        flexShrink: 0
-    },
-    vue1: {
+    date: {
         backgroundColor: 'red',
-        flexGrow: 5,
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center'
+
+        flexGrow: 0,
+        flexBasis: height * 0.10,
+
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'stretch',
+
+        padding: Dim.scale(3)
     },
-    vue1_child1: {
-        backgroundColor: 'black',
-        flexBasis: Dim.heightScale(8),
-        aspectRatio: 1,
-        flexGrow: 0
+    dateTexte: {
+        backgroundColor: 'white',
+
+        flexGrow: 1,
     },
-    vue2: {
+    oeufs: {
         backgroundColor: 'green',
-        flexGrow: 10
+
+        flexGrow: 0,
+        flexBasis: height * 0.70,
     },
-    vue3: {
+    boutons: {
+        backgroundColor: FAKE_WHITE,
+
+        flexGrow: 1,
+        flexBasis: height * 0.1,
+
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+
+        padding: Dim.scale(3),
+        gap: Dim.scale(3),
+    },
+    bouton: {
+        flexGrow: 1,
+
+        borderRadius: Dim.scale(1)
+    },
+    boutons_lig: {
+        backgroundColor: FAKE_WHITE,
+
+        flexGrow: 1,
+        
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'stretch',
+
+        gap: Dim.scale(3)
+    },
+    boutons_lig1: {
+        flexGrow: 0.4
+    },
+    bouton1: {
+        backgroundColor: 'red',
+    },
+    bouton2: {
+        backgroundColor: 'green',
+    },
+    bouton3: {
         backgroundColor: 'purple',
-        flexGrow: 60
     },
-    vue4: {
+    bouton4: {
         backgroundColor: 'orange',
-        flexGrow: 25
-    }
+    },
 })
 
 

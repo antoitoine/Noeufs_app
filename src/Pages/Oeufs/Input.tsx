@@ -2,16 +2,21 @@ import { useRef } from "react"
 import { StyleSheet, TextInput } from "react-native"
 import * as Dim from '../../Utils/Dimensions'
 
-function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: number, posy: number, width: number, height: number, couleur: string, couleur2: string, onSubmit: Function}) {
+type inputType = {
+    colors: {dark: string, light: string},
+    onSubmit: Function
+}
+
+function Input({colors, onSubmit}: inputType) {
     
     const text = useRef('')
     
     return (
         <TextInput
-            style={[styles.input, styles.inputTexte, {left: posx, bottom: posy, width: width, height: height, borderColor: couleur, color: couleur}]}
+            style={[styles.input, {borderColor: colors.dark, color: colors.dark}]}
             keyboardType="numeric"
             placeholder="0"
-            placeholderTextColor={couleur2}
+            placeholderTextColor={colors.light}
             onBlur={() => {
                 onSubmit(parseInt(text.current))
                 
@@ -29,17 +34,21 @@ function Input({posx, posy, width, height, couleur, couleur2, onSubmit}: {posx: 
 
 const styles = StyleSheet.create({
     input: {
-        position: 'absolute',
-        borderRadius: Dim.scale(2),
-        borderWidth: Dim.scale(1)
-    },
-    inputTexte: {
+        flexGrow: 1,
+
+        padding: 0,
+
+        borderWidth: Dim.scale(1),
+        borderRadius: Dim.scale(1),
+
         textAlign: 'center',
         textAlignVertical: 'center',
-        color: 'black',
+
         fontWeight: 'bold',
-        fontSize: Dim.scale(6)
-    },
+        fontSize: Dim.scale(5),
+    }
 })
+
+// TODO : Afficher initialement le nombre d'oeufs du jour
 
 export default Input

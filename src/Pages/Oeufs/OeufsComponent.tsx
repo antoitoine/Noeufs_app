@@ -1,12 +1,12 @@
-import { Animated, Keyboard, KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
+import { Animated, Dimensions, Keyboard, KeyboardAvoidingView, StatusBar, StyleSheet, Text, View } from "react-native";
 import * as Dim from '../../Utils/Dimensions';
 import { StackParamList } from "../../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { PanGestureHandler } from "react-native-gesture-handler";
 import { FAKE_WHITE } from "../../Constantes/Couleurs";
 import moment from "moment";
-import React, { useRef } from "react";
-import { EdgeInsets } from "react-native-safe-area-context";
+import React, { useRef, useState } from "react";
+import { EdgeInsets, initialWindowMetrics } from "react-native-safe-area-context";
 import Bouton from "./Bouton";
 import Input from "./Input";
 import Jour from "./Jour";
@@ -14,7 +14,7 @@ import * as Couleur from '../../Utils/Couleurs'
 import { User } from "firebase/auth";
 import InformationButton from "./InformationButton";
 
-export const taille_disque = Dim.scale(6);
+export const taille_disque = Dim.scale(5.5);
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
@@ -32,13 +32,14 @@ type OeufsComponentProps = {
 
 function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, events, user, reinitialiserOeufs, ajouterOeufs, nbOeufsInput}: NavigationProps & OeufsComponentProps) {
 
-    
+    const [oeufsHeight, setOeufsHeight] = useState(0)
 
     /* Calcul affichage du nombre d'oeufs */
 
     const translation = useRef(new Animated.Value(0)).current;
 
     var nbOeufs_text = ''
+    const circleWidth = Math.min(Dim.widthScale(45), Dim.heightScale(33.33))
 
 
     if (nbOeufs[date.date()] === undefined) nbOeufs_text = '?'
@@ -46,19 +47,17 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
     else if (nbOeufs[date.date()]! <= 1)     nbOeufs_text = nbOeufs[date.date()] + ' Oeuf'
     else                            nbOeufs_text = nbOeufs[date.date()] + ' Oeufs'
 
-    function showDays(position: Animated.AnimatedInterpolation<string | number>) {
+    function showDays(position: Animated.AnimatedInterpolation<string | number>, color?: string) {
         return (
             <Animated.View
                 style={{
-                    position: 'absolute',
-                    width: Dim.widthScale(100),
-                    height: Dim.heightScale(100),
-                    bottom: 0,
+                    position: 'relative',
+                    flexBasis: Dim.widthScale(100),
                     transform: [{translateX: position}],
                 }}
             >
                 
-                <View style={styles.affichageOeufs}>
+                <View style={[styles.affichageOeufs, {height: oeufsHeight / 2, bottom: oeufsHeight / 4}]}>
                     <Text style={[styles.affichageOeufsText, {color: colors.dark}]}>
                         {nbOeufs_text}
                     </Text>
@@ -69,8 +68,8 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
                         const day = i + 1
 
                         const angle = day * 2 * Math.PI / date.daysInMonth();
-                        const posX = Dim.widthScale(50) + Math.cos(angle) * Dim.scale(45) - taille_disque / 2;
-                        const posY = Dim.heightScale(50) + Math.sin(angle) * Dim.scale(45) - taille_disque / 2;
+                        const posX = Dim.widthScale(50) + Math.cos(angle) * circleWidth - taille_disque / 2;
+                        const posY = oeufsHeight / 2 + Math.sin(angle) * circleWidth - taille_disque / 2;
                         
                         const color = Couleur.getRGBColorFromGradient(nbOeufs[day] !== undefined ? colors.darkGradient : colors.lightGradient, day-1)
                         //const color = nbOeufs.parJour[i] !== undefined ? colors.darkGradient[i] : colors.lightGradient[i]
@@ -90,17 +89,17 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
             onTouchStart={(event) => {
                 setTimeout(() => Keyboard.dismiss(), 200)
             }}
-            style={{flex: 1}} contentContainerStyle={styles.wrapper}
+            style={styles2.wrapper} contentContainerStyle={styles2.container}
             behavior="height"
             keyboardVerticalOffset={Dim.heightScale(7) + insets.bottom}
         >
             
 
-            <Text style={[styles.affichageJour, {color: colors.dark}]}>{date.date() == 1 ? '1er' : date.date()} {date.format('MMMM YYYY')}</Text>
+            <View style={styles2.date}>
+                <Text style={[styles2.dateTexte, {color: colors.dark}]}>{date.date() == 1 ? '1er' : date.date()} {date.format('MMMM YYYY')}</Text>
+            </View>
 
             
-
-            <View style={styles.defaultPosition}>
                 <PanGestureHandler
                     onGestureEvent={Animated.event([{
                         nativeEvent: {
@@ -135,78 +134,75 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
                         });
                     }}
                 >
-                    <Animated.View style={styles.defaultPosition}>
+                    <Animated.View
+                        style={styles2.oeufs}
+                        onLayout={(event) => {
+                            setOeufsHeight(event.nativeEvent.layout.height)
+                        }}
+                    >
                         {
+                            // Rouge au centre
                             showDays(translation.interpolate({
-                                inputRange: [-Dim.widthScale(100), Dim.widthScale(100)],
-                                outputRange: [-Dim.widthScale(100), Dim.widthScale(100)]
-                            }))
+                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)], // 0 pour centrer
+                                outputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)]  // Déplacement fluide de gauche à droite
+                            }), 'red')
                         }
                         {
+                            // Bleu à gauche
                             showDays(translation.interpolate({
-                                inputRange: [-Dim.widthScale(100), 0],
-                                outputRange: [0, Dim.widthScale(100)]
-                            }))
+                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)],
+                                outputRange: [-Dim.widthScale(300), -Dim.widthScale(200), -Dim.widthScale(100)] // Bleue décalée à gauche
+                            }), 'blue')
                         }
                         {
+                            // Orange à droite
                             showDays(translation.interpolate({
-                                inputRange: [0, Dim.widthScale(100)],
-                                outputRange: [-Dim.widthScale(100), 0]
-                            }))
+                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)],
+                                outputRange: [-Dim.widthScale(200), -Dim.widthScale(100), 0] // Orange décalée à droite
+                            }), 'orange')
                         }
                     </Animated.View>
 
                 </PanGestureHandler>
+            
+            
+            <View style={styles2.boutons}>
+                <View style={[styles2.boutons_lig, styles2.boutons_lig1]}>
+                    <Bouton
+                        colors={{dark: colors.dark, light: colors.light}}
+                        titre={'Réinitialiser'}
+                        onPress={() => {
+                            reinitialiserOeufs()
+                        }}
+                    />
+                </View>
+                <View style={[styles2.boutons_lig, styles2.boutons_lig2]}>
+                    <Bouton
+                        colors={{dark: colors.dark, light: colors.light}}
+                        titre={'Valider'}
+                        onPress={() => {
+                            Keyboard.dismiss()
+                            ajouterOeufs(nbOeufsInput.current!)
+                        }}
+                    />
+
+                    <Input
+                        colors={{dark: colors.dark, light: colors.light}}
+                        onSubmit={(value: number) => {
+                            nbOeufsInput.current = value
+                        }}
+                    />
+
+                    <Bouton
+                        colors={{dark: colors.dark, light: colors.light}}
+                        titre={'Aucun'}
+                        onPress={() => {
+                            ajouterOeufs(0)
+                        }}
+                    />
+                </View>
             </View>
 
-            <Bouton
-                posx={Dim.widthScale(2)}
-                posy={50} // Bottom pos
-                width={Dim.widthScale(30)}
-                height={Dim.heightScale(10)}
-                couleur={colors.dark}
-                texte={'Réinitialiser'}
-                onPress={() => {
-                    reinitialiserOeufs()
-                }}
-            />
-
-            <Bouton
-                posx={Dim.widthScale(2)}
-                posy={50 + Dim.heightScale(11)} // bottom pos
-                width={Dim.widthScale(96)}
-                height={Dim.heightScale(5)}
-                couleur={colors.dark}
-                texte="Valider"
-                onPress={() => {
-                    Keyboard.dismiss()
-                    ajouterOeufs(nbOeufsInput.current!)
-                }}
-            />
-
-            <Input
-                posx={Dim.widthScale(34)}
-                posy={50} // Bottom pos
-                width={Dim.widthScale(32)}
-                height={Dim.heightScale(10)}
-                couleur={colors.dark}
-                couleur2={colors.dark}
-                onSubmit={(value: number) => {
-                    nbOeufsInput.current = value
-                }}
-            />
-
-            <Bouton
-                posx={Dim.widthScale(68)}
-                posy={50} // Bottom pos
-                width={Dim.widthScale(30)}
-                height={Dim.heightScale(10)}
-                couleur={colors.dark}
-                texte={'Aucun oeuf'}
-                onPress={() => {
-                    ajouterOeufs(0)
-                }}
-            />
 
         </KeyboardAvoidingView>
     )
@@ -257,11 +253,9 @@ const styles = StyleSheet.create({
     },
     affichageOeufs: {
         position: 'absolute',
-        bottom: Dim.heightScale(40) - Dim.scale(5),
-        width: Dim.scale(50),
-        left: Dim.scale(25),
-        height: Dim.scale(50),
-        display: 'flex',
+        width: Dim.widthScale(50),
+        left: Dim.widthScale(25),
+
         alignItems: 'center',
         justifyContent: 'center'
     },
@@ -311,5 +305,73 @@ const styles = StyleSheet.create({
         height: Dim.heightScale(100)
     },
 });
+
+const styles2 = StyleSheet.create({
+    wrapper: {
+        flex: 1,
+
+        backgroundColor: FAKE_WHITE
+    },
+    container: {
+        flexGrow: 1,
+
+        backgroundColor: 'blue',
+
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+    },
+    date: {
+        flexGrow: 0,
+        flexBasis: Dim.heightScale(10),
+
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'stretch',
+
+        padding: Dim.scale(3)
+    },
+    dateTexte: {
+        textAlign: 'center',
+        textAlignVertical: 'center',
+
+        flexGrow: 0,
+
+        fontSize: Dim.scale(5),
+        fontWeight: 'bold'
+    },
+    oeufs: {
+        flexGrow: 0,
+        flexBasis: Dim.heightScale(70),
+
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        justifyContent: 'flex-start'
+    },
+    boutons: {
+        flexGrow: 1,
+        flexBasis: Dim.heightScale(20),
+
+        flexDirection: 'column',
+        justifyContent: 'space-around',
+
+        padding: Dim.scale(3),
+        gap: Dim.scale(3),
+    },
+    boutons_lig: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'stretch',
+
+        gap: Dim.scale(3)
+    },
+    boutons_lig1: {
+        flexGrow: 0.5,
+    },
+    boutons_lig2: {
+        flexGrow: 1,
+    },
+
+
+})
 
 export default OeufsComponent

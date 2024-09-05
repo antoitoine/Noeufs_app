@@ -1,9 +1,10 @@
-import { Dimensions } from "react-native";
+import { Dimensions, StatusBar } from "react-native";
+import { initialWindowMetrics } from "react-native-safe-area-context";
 
 /**
  * Height of displayed part of the app (excluding header and footer on Android)
  */
-const window_height = Dimensions.get('window').height;
+const window_height = Dimensions.get('window').height - initialWindowMetrics!.insets.bottom - initialWindowMetrics!.insets.top - StatusBar.currentHeight!
 /**
  * Width of displayed part of the app
  */
