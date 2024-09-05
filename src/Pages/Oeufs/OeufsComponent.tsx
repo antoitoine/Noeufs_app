@@ -6,7 +6,7 @@ import { PanGestureHandler } from "react-native-gesture-handler";
 import { FAKE_WHITE } from "../../Constantes/Couleurs";
 import moment from "moment";
 import React, { useRef, useState } from "react";
-import { EdgeInsets, initialWindowMetrics } from "react-native-safe-area-context";
+import { EdgeInsets, initialWindowMetrics, SafeAreaView } from "react-native-safe-area-context";
 import Bouton from "./Bouton";
 import Input from "./Input";
 import Jour from "./Jour";
@@ -85,6 +85,7 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
     }
 
     return (
+        <SafeAreaView style={{position: 'absolute', height: Dim.heightScale(100), width: Dim.widthScale(100), bottom: 0}}>
         <KeyboardAvoidingView
             onTouchStart={(event) => {
                 setTimeout(() => Keyboard.dismiss(), 200)
@@ -170,19 +171,20 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
                 <View style={[styles2.boutons_lig, styles2.boutons_lig1]}>
                     <Bouton
                         colors={{dark: colors.dark, light: colors.light}}
-                        titre={'Réinitialiser'}
-                        onPress={() => {
-                            reinitialiserOeufs()
-                        }}
-                    />
-                </View>
-                <View style={[styles2.boutons_lig, styles2.boutons_lig2]}>
-                    <Bouton
-                        colors={{dark: colors.dark, light: colors.light}}
                         titre={'Valider'}
                         onPress={() => {
                             Keyboard.dismiss()
                             ajouterOeufs(nbOeufsInput.current!)
+                        }}
+                    />
+                </View>
+                <View style={[styles2.boutons_lig, styles2.boutons_lig2]}>
+                    
+                    <Bouton
+                        colors={{dark: colors.dark, light: colors.light}}
+                        titre={'Réinitialiser'}
+                        onPress={() => {
+                            reinitialiserOeufs()
                         }}
                     />
 
@@ -195,7 +197,7 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
 
                     <Bouton
                         colors={{dark: colors.dark, light: colors.light}}
-                        titre={'Aucun'}
+                        titre={'Aucun oeuf'}
                         onPress={() => {
                             ajouterOeufs(0)
                         }}
@@ -205,6 +207,7 @@ function OeufsComponent({route, navigation, colors, nbOeufs, date, insets, event
 
 
         </KeyboardAvoidingView>
+        </SafeAreaView>
     )
 }
 
@@ -310,7 +313,7 @@ const styles2 = StyleSheet.create({
     wrapper: {
         flex: 1,
 
-        backgroundColor: FAKE_WHITE
+        backgroundColor: FAKE_WHITE,
     },
     container: {
         flexGrow: 1,

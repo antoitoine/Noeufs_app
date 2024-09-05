@@ -34,7 +34,7 @@ function Input({colors, onSubmit}: inputType) {
 
 const styles = StyleSheet.create({
     input: {
-        flexGrow: 1,
+        flexGrow: 2,
 
         padding: 0,
 
