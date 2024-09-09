@@ -3,6 +3,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import MainNavigatorContainer from "./src/Pages/MainNavigator/MainNavigatorContainer";
 import { ThemeProvider } from "./src/Contexts/ThemeContext";
 import { AuthProvider } from "./src/Contexts/AuthContext";
+import Navigation from "./src/NewArchitecture/Navigation/Navigation";
 
 export type StackParamList = {
     Oeufs: undefined,
@@ -12,7 +13,8 @@ export type StackParamList = {
     Historique: undefined,
     Animaux: undefined,
     Statistiques: undefined,
-    Tests: undefined
+    Tests: undefined,
+    Parametres: undefined
 }
 
 export default function App() {
@@ -21,7 +23,7 @@ export default function App() {
         <AuthProvider>
         <ThemeProvider>
         <GestureHandlerRootView>
-            <MainNavigatorContainer />
+            <Navigation />
         </GestureHandlerRootView>
         </ThemeProvider>
         </AuthProvider>
