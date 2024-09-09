@@ -1,12 +1,12 @@
-import { Animated, Keyboard, KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
+import { Animated, Keyboard, KeyboardAvoidingView, StyleSheet, Text, View, VirtualizedList } from "react-native";
 import * as Dim from '../../Utils/Dimensions';
 import { StackParamList } from "../../../App";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { PanGestureHandler } from "react-native-gesture-handler";
 import { DEGRADES, FAKE_WHITE } from "../../Constantes/Couleurs";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import React, { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
-import { EdgeInsets, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Couleur from '../../Utils/Couleurs'
 import { User } from "firebase/auth";
 import { ThemeContext } from "../../Contexts/ThemeContext";
@@ -16,37 +16,31 @@ import { get, ref, remove, set } from "firebase/database";
 import Bouton from "./Bouton";
 import Input from "./Input";
 import Jour from "./Jour";
+import CercleOeufs from "./CercleOeufs";
 
 export const taille_disque = Dim.scale(5.5);
 export const MODES_OEUFS = ['poules', 'cailles', 'oies', 'cannes']
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
-type OeufsComponentProps = {
-    colors: {dark: string, light: string, darkGradient: Array<Array<number>>, lightGradient: Array<Array<number>>}
-    nbOeufs: Array<number | undefined>
-    date: moment.Moment
-    insets: EdgeInsets
-    events: {changeMonth: (decalage: number) => void, changeDay: (id: number) => void}
-    user: User | null
-    reinitialiserOeufs: () => void
-    ajouterOeufs: (quantite: number | undefined) => void
-    nbOeufsInput: React.MutableRefObject<null | number>
-}
-
 function OeufsComponent({route, navigation}: NavigationProps) {
 
     const [oeufsHeight, setOeufsHeight] = useState(0)
+    const [items, setItems] = useState([moment().subtract(1, 'M'), moment(), moment().add(1, 'M')])
+
+    console.log(items)
 
     /* States */
 
     const [dateChoisie, setDateChoisie] = useState(moment())
     const [nbOeufsMois, setNbOeufsMois] = useState(Array<number | undefined>(dateChoisie.daysInMonth()+1))
     const [databaseInitialized, setDatabaseInitialized] = useState(false)
+    const [dateIndex, setDateIndex] = useState(1)
 
     /* Refs */
 
     const nbOeufsInput = useRef<number | null>(null)
+    const virtualizedListRef = useRef<VirtualizedList<Moment>>(null)
 
     /* Language */
 
@@ -164,70 +158,72 @@ function OeufsComponent({route, navigation}: NavigationProps) {
             </View>
 
             
-                <PanGestureHandler
-                    onGestureEvent={Animated.event([{
-                        nativeEvent: {
-                            translationX: translation
-                        }
-                    }],
-                    {useNativeDriver: true}
-                    )}
-                    onEnded={(event) => {
-                        const dragX = event.nativeEvent.translationX as number
+            <View style={styles2.oeufs}>
+                <VirtualizedList
+                    style={styles2.listWrapper}
+                    contentContainerStyle={styles2.listContainer}
 
-                        var etat = 0;                 // 0 : Pas de slide / 1 : gauche / 2 : droite
-                        if (Math.abs(dragX) > 80) {
-                            if (dragX < 0) {
-                                etat = 1;
-                            }
-                            else {
-                                etat = 2;
-                            }
-                        }
+                    ref={virtualizedListRef}
+                    data={items}
 
-                        const val = etat == 0 ? 0 : (etat == 1 ? -Dim.widthScale(100) : Dim.widthScale(100));
+                    getItem={((data, index) => {
+                        return data[index]
+                    })}
 
-                        Animated.timing(translation, {
-                            toValue: val,
-                            useNativeDriver: true,
-                        }).start(() => {
-                            translation.setValue(0);
-
-                            if (etat == 2)      changerMoisChoisi(dateChoisie, setDateChoisie, -1)
-                            else if (etat == 1) changerMoisChoisi(dateChoisie, setDateChoisie, +1)
-                        });
+                    getItemCount={(data) => {
+                        return data.length
                     }}
-                >
-                    <Animated.View
-                        style={styles2.oeufs}
-                        onLayout={(event) => {
-                            setOeufsHeight(event.nativeEvent.layout.height)
-                        }}
-                    >
-                        {
-                            // Rouge au centre
-                            showDays(translation.interpolate({
-                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)], // 0 pour centrer
-                                outputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)]  // Déplacement fluide de gauche à droite
-                            }), 'red')
-                        }
-                        {
-                            // Bleu à gauche
-                            showDays(translation.interpolate({
-                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)],
-                                outputRange: [-Dim.widthScale(300), -Dim.widthScale(200), -Dim.widthScale(100)] // Bleue décalée à gauche
-                            }), 'blue')
-                        }
-                        {
-                            // Orange à droite
-                            showDays(translation.interpolate({
-                                inputRange: [-Dim.widthScale(100), 0, Dim.widthScale(100)],
-                                outputRange: [-Dim.widthScale(200), -Dim.widthScale(100), 0] // Orange décalée à droite
-                            }), 'orange')
-                        }
-                    </Animated.View>
 
-                </PanGestureHandler>
+                    keyExtractor={(item: Moment, index) => {return item.format('YYYYMM') + index.toString()}}
+
+                    renderItem={(item) => {
+                        return (
+                            <View
+                                style={styles2.item}
+                            >
+                                <Text>{item.item.format('DD/MM/YYYY')}</Text>
+                            </View>
+                        )
+                    }}
+
+                    onEndReached={(info) => {
+                        setItems([...items, items[items.length-1].clone().add(1, 'M')])
+                        setDateChoisie(items[items.length-2])
+                    }}
+
+                    onStartReached={(info) => {
+                        setItems([items[0].clone().subtract(1, 'M'), ...items])
+                        virtualizedListRef.current?.scrollToIndex({index: 1, animated: false})
+                        setDateChoisie(items[0])
+                        
+                    }}
+
+                    onMomentumScrollEnd={(event) => {
+                        const index = Math.round(event.nativeEvent.contentOffset.x / Dim.widthScale(100))
+                        if (index !== dateIndex) {
+                            setDateIndex(index)
+                            setDateChoisie(items[index])
+                        }
+                    }}
+
+                    horizontal={true}
+                    pagingEnabled={true}
+                    initialScrollIndex={1}
+                    onScrollToIndexFailed={(info) => {
+                        console.log('Failed to scroll, waiting 500ms')
+                        new Promise(resolve => setTimeout(resolve, 500)).then(() => {
+                            virtualizedListRef.current?.scrollToIndex({index: info.index, animated: false})
+                        }).catch((e) => {
+                            console.error('Error while scrolling : ' + e)
+                        })
+                    }}
+                    showsHorizontalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}
+                    maxToRenderPerBatch={3}
+                >
+
+                </VirtualizedList>
+            </View>
             
             
             <View style={styles2.boutons}>
@@ -413,6 +409,25 @@ const styles2 = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'stretch',
         justifyContent: 'flex-start'
+    },
+    listContainer: {
+        backgroundColor: 'yellow',
+
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'stretch'
+    },
+    listWrapper: {
+        backgroundColor: 'grey',
+
+        flexGrow: 1
+    },
+    item: {
+        borderWidth: 1,
+        borderRadius: Dim.scale(1),
+
+        width: Dim.widthScale(95),
+        margin: Dim.widthScale(2.5)
     },
     boutons: {
         flexGrow: 1,
