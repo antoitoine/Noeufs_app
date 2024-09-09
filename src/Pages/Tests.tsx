@@ -1,26 +1,20 @@
-import { Dimensions, Platform, SafeAreaView, StatusBar, StyleProp, StyleSheet, useWindowDimensions, View, ViewStyle } from "react-native"
+import { Dimensions, Platform, SafeAreaView, StatusBar, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle, VirtualizedList } from "react-native"
 import * as Dim from '../Utils/Dimensions'
 import { Background } from "@react-navigation/elements"
-import React, { useContext, useEffect } from "react"
+import React, { useContext, useEffect, useRef, useState } from "react"
 import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "@react-navigation/native"
 import { ThemeContext } from "../Contexts/ThemeContext"
 import changeNavigationBarColor, { hideNavigationBar, showNavigationBar } from "react-native-navigation-bar-color"
 import { FAKE_WHITE } from "../Constantes/Couleurs"
 
-export const STATUS_BAR_HEIGHT = StatusBar.currentHeight!
-
-export const WINDOW_HEIGHT_NO_STATUS_BAR = Platform.OS !== 'ios' && Dimensions.get('screen').height !== Dimensions.get('window').height && STATUS_BAR_HEIGHT > 24 
-? Dimensions.get('screen').height - STATUS_BAR_HEIGHT 
-: STATUS_BAR_HEIGHT > 24 
-  ? Dimensions.get('window').height - STATUS_BAR_HEIGHT 
-  : Dimensions.get('window').height + initialWindowMetrics!.insets.bottom === Dimensions.get('screen').height 
-    ? Dimensions.get('window').height - STATUS_BAR_HEIGHT 
-    : Dimensions.get('window').height
-
 var height = Dimensions.get('window').height - initialWindowMetrics!.insets.bottom - initialWindowMetrics!.insets.top - StatusBar.currentHeight!
 
 function Tests() {
+
+    const [items, setItems] = useState([1, 2, 3])
+
+    console.debug(items)
 
     const insets = useSafeAreaInsets()
 
@@ -36,6 +30,8 @@ function Tests() {
         height = Dimensions.get('window').height - initialWindowMetrics!.insets.bottom - initialWindowMetrics!.insets.top - StatusBar.currentHeight!
     }, [height])
 
+    const virtualizedListRef = useRef<VirtualizedList<number>>(null)
+
     return (
         <SafeAreaView style={styles.container}>
             <View
@@ -46,7 +42,59 @@ function Tests() {
             <View
                 style={styles.oeufs}
             >
+                <VirtualizedList
+                    style={styles.listWrapper}
+                    contentContainerStyle={styles.listContainer}
 
+                    ref={virtualizedListRef}
+                    data={items}
+
+                    getItem={((data, index) => {
+                        return data[index]
+                    })}
+
+                    getItemCount={(data) => {
+                        return data.length
+                    }}
+
+                    keyExtractor={(item, index) => item.toString()}
+
+                    renderItem={(item) => {
+                        return (
+                            <View
+                                style={styles.item}
+                            >
+                                <Text>{item.item}</Text>
+                            </View>
+                        )
+                    }}
+
+                    onEndReached={(info) => {
+                        setItems([...items, items.length + 1])
+                    }}
+
+                    onStartReached={(info) => {
+                        setItems([items[0] - 1, ...items])
+                        virtualizedListRef.current?.scrollToIndex({index: 1, animated: false})
+                    }}
+
+                    horizontal={true}
+                    pagingEnabled={true}
+                    initialScrollIndex={1}
+                    onScrollToIndexFailed={(info) => {
+                        console.log('Failed to scroll, waiting 500ms')
+                        new Promise(resolve => setTimeout(resolve, 500)).then(() => {
+                            virtualizedListRef.current?.scrollToIndex({index: info.index, animated: false})
+                        }).catch((e) => {
+                            console.error('Error while scrolling : ' + e)
+                        })
+                    }}
+                    showsHorizontalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}
+                    maxToRenderPerBatch={3}
+                >
+
+                </VirtualizedList>
             </View>
             <View
                 style={styles.boutons}
@@ -101,6 +149,28 @@ const styles = StyleSheet.create({
 
         flexGrow: 0,
         flexBasis: height * 0.70,
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        alignItems: 'stretch'
+    },
+    listContainer: {
+        backgroundColor: 'yellow',
+
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'stretch'
+    },
+    listWrapper: {
+        backgroundColor: 'grey',
+
+        flexGrow: 1
+    },
+    item: {
+        borderWidth: 1,
+        borderRadius: Dim.scale(1),
+
+        width: Dim.widthScale(95),
+        margin: Dim.widthScale(2.5)
     },
     boutons: {
         backgroundColor: FAKE_WHITE,

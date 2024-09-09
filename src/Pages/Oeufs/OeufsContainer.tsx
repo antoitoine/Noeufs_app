@@ -16,7 +16,7 @@ import { DEGRADES } from "../../Constantes/Couleurs";
 import { AuthContext } from "../../Contexts/AuthContext";
 import * as Couleur from '../../Utils/Couleurs'
 import { User } from "firebase/auth";
-import 'moment/locale/fr'
+import 'moment/min/locales'
 
 
 /* EXPORTS */
@@ -48,7 +48,7 @@ function OeufsContainer({route, navigation}: NavigationProps) {
     /* Language */
 
     useEffect(() => {
-        moment.locale('fr')
+        moment.locale(['fr', 'en'])
     }, [])
 
     /* Theme */

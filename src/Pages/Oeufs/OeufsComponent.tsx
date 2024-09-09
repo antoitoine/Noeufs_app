@@ -377,4 +377,6 @@ const styles2 = StyleSheet.create({
 
 })
 
+// TODO : Préparer l'affichages des vues de gauche et droite (mois précédent et suivant) à l'avance
+
 export default OeufsComponent
