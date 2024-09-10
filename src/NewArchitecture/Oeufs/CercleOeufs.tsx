@@ -1,24 +1,59 @@
 import { StyleSheet, Text, View } from "react-native";
 import Jour from "./Jour";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 import moment, { Moment } from "moment";
 import * as Dim from '../../Utils/Dimensions'
 import { degradeCouleur, getRGBColorFromGradient } from "../../Utils/Couleurs";
 import { DEGRADES } from "../../Constantes/Couleurs";
-import { taille_disque } from "./Oeufs";
+import { ModeOeufs, taille_disque } from "./Oeufs";
+import { AuthContext } from "../../Contexts/AuthContext";
+import { get, ref } from "firebase/database";
+import { database } from "../../../firebase";
+import { User } from "@firebase/auth";
+import { ThemeContext } from "../../Contexts/ThemeContext";
 
 type cercleOeufsProps = {
     theme: any
     changerJourChoisi: Function
     dateChoisie: Moment
     setDateChoisie: Dispatch<SetStateAction<Moment>>
+    dateDepart: Moment
 }
 
-const CercleOeufs = ({theme, changerJourChoisi, dateChoisie, setDateChoisie}: cercleOeufsProps) => {
+const CercleOeufs = ({theme, changerJourChoisi, dateChoisie, setDateChoisie, dateDepart}: cercleOeufsProps) => {
     /* States */
 
     const [nbOeufsMois, setNbOeufsMois] = useState(Array<number | undefined>(dateChoisie.daysInMonth()+1))
-    const [containerHeight, setContainerHeight] = useState(100)
+    const [containerHeight, setContainerHeight] = useState(300)
+    
+
+    /* Hauteur */
+
+    const viewRef = useRef<View>(null)
+
+    useEffect(() => {
+        viewRef.current?.measure((x, y, w, h) => {
+            setContainerHeight(h)
+        })
+    }, [viewRef.current])
+
+    /* User */
+
+    const user = useContext(AuthContext)!.user
+
+    /* Oeufs mois */
+
+    const type = ModeOeufs[0]
+
+    useEffect(() => {
+        const nbOeufsMois_copie = chargerOeufsDuMois(user, dateDepart, type)
+        if (nbOeufsMois_copie !== undefined) {
+            setNbOeufsMois(nbOeufsMois_copie.slice())
+            console.log('PAS COPIE')
+        } else {
+            setNbOeufsMois(Array().fill(undefined))
+        }
+    }, [])
 
     /* Gradients */
 
@@ -39,8 +74,9 @@ const CercleOeufs = ({theme, changerJourChoisi, dateChoisie, setDateChoisie}: ce
         <View
             style={styles.container}
             onLayout={(event) => {
-                setContainerHeight(event.nativeEvent.layout.height)
+                //setContainerHeight(event.nativeEvent.layout.height)
             }}
+            ref={viewRef}
         >
             
             <View style={[styles.nbOeufs]}>
@@ -102,5 +138,50 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     }
 })
+
+const chargerOeufsDuMois = (user: User | null, date: Moment, type: typeof ModeOeufs[number]): Array<number | undefined> | undefined => {
+    console.log('Tentative de connexion à la base de données : ')
+    console.debug(user?.displayName)
+    console.debug(date)
+    console.debug(type)
+
+    if (!user) {
+        console.log('Aucun utilisateur connecté, impossible de récupérer les données')
+        return undefined
+    }
+    
+    const oeufsDuMois = Array<number | undefined>(date.daysInMonth()+1)
+    const typeOeufs = 'oeufs_' + type
+    console.log(typeOeufs)
+
+    get(ref(database, 'users/' + user.uid + '/oeufs/' + date.format('YYYY-MM'))).then((snapshot) => {
+        
+        console.debug(snapshot)
+
+        if (snapshot.exists()) {
+            console.log('Données récupérées')
+            const snapshotData = snapshot.val()
+
+            for (var iJour = 1; iJour <= date.daysInMonth(); ++iJour) {
+                if (snapshotData[iJour] && (snapshotData[iJour][typeOeufs] || snapshotData[iJour][typeOeufs] === 0)) {
+                    oeufsDuMois[iJour] = snapshotData[iJour][typeOeufs]
+                } else {
+                    oeufsDuMois[iJour] = undefined
+                }
+            }
+        } else {
+            console.log('Aucun oeuf trouvé pour le mois spécifié')
+            oeufsDuMois.fill(undefined)
+        }
+
+        /*setNbOeufs(nbOeufsMois_db.slice())
+        setDbInit(true)*/
+        return oeufsDuMois.slice()
+
+    }).catch((error) => {
+        console.log('Can\'t fetch data')
+        console.error(error)
+    })
+}
 
 export default CercleOeufs

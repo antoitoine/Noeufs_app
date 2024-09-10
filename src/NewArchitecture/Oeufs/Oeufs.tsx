@@ -19,7 +19,12 @@ import Jour from "./Jour";
 import CercleOeufs from "./CercleOeufs";
 
 export const taille_disque = Dim.scale(5.5);
-export const MODES_OEUFS = ['poules', 'cailles', 'oies', 'cannes']
+export const ModeOeufs = [
+    'poules',
+    'oies',
+    'cailles',
+    'cannes'
+] as const
 
 type NavigationProps = NativeStackScreenProps<StackParamList, 'Oeufs'>;
 
@@ -48,6 +53,13 @@ function OeufsComponent({route, navigation}: NavigationProps) {
         moment.locale(['fr', 'en'])
     }, [])
 
+    /* Scroll */
+
+    /*useEffect(() => {
+        setDateChoisie(items[1])
+        setDateIndex(1)
+    }, [])*/
+
     /* Theme */
 
     const theme = useContext(ThemeContext)!
@@ -66,7 +78,7 @@ function OeufsComponent({route, navigation}: NavigationProps) {
     /* Header */
 
     useEffect(() => {
-        navigation.setOptions({title: MODES_OEUFS[theme.mode]})
+        navigation.setOptions({title: ModeOeufs[0]})
     }, [theme.mode])
 
     const insets = useSafeAreaInsets()
@@ -75,13 +87,13 @@ function OeufsComponent({route, navigation}: NavigationProps) {
 
     const authContext = useContext(AuthContext)!
 
-    useEffect(() => {
-        lireOeufsDb(dateChoisie, setNbOeufsMois, authContext.user, setDatabaseInitialized, MODES_OEUFS[theme.mode])
+    /*useEffect(() => {
+        lireOeufsDb(dateChoisie, setNbOeufsMois, authContext.user, setDatabaseInitialized, ModeOeufs[0])
     }, [authContext.user, dateChoisie.month(), theme.mode])
 
     useEffect(() => {
-        updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized, MODES_OEUFS[theme.mode])
-    }, [nbOeufsMois])
+        updateOeufsDb(authContext.user, dateChoisie, nbOeufsMois, databaseInitialized, ModeOeufs[0])
+    }, [nbOeufsMois])*/
 
     /* Calcul affichage du nombre d'oeufs */
 
@@ -178,12 +190,21 @@ function OeufsComponent({route, navigation}: NavigationProps) {
 
                     renderItem={(item) => {
                         return (
+                            <CercleOeufs
+                                changerJourChoisi={changerJourChoisi}
+                                dateChoisie={dateChoisie}
+                                setDateChoisie={setDateChoisie}
+                                theme={theme}
+                                dateDepart={item.item}
+                            />
+                        )
+                        /*return (
                             <View
                                 style={styles2.item}
                             >
                                 <Text>{item.item.format('DD/MM/YYYY')}</Text>
                             </View>
-                        )
+                        )*/
                     }}
 
                     onEndReached={(info) => {
@@ -200,6 +221,7 @@ function OeufsComponent({route, navigation}: NavigationProps) {
 
                     onMomentumScrollEnd={(event) => {
                         const index = Math.round(event.nativeEvent.contentOffset.x / Dim.widthScale(100))
+                        console.log('index : ' + index)
                         if (index !== dateIndex) {
                             setDateIndex(index)
                             setDateChoisie(items[index])
@@ -212,13 +234,14 @@ function OeufsComponent({route, navigation}: NavigationProps) {
                     onScrollToIndexFailed={(info) => {
                         console.log('Failed to scroll, waiting 500ms')
                         new Promise(resolve => setTimeout(resolve, 500)).then(() => {
-                            virtualizedListRef.current?.scrollToIndex({index: info.index, animated: false})
+                            virtualizedListRef.current?.scrollToIndex({index: info.index, animated: true})
+                            setDateChoisie(items[1])
                         }).catch((e) => {
                             console.error('Error while scrolling : ' + e)
                         })
                     }}
-                    showsHorizontalScrollIndicator={false}
-                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={true}
+                    showsVerticalScrollIndicator={true}
                     maxToRenderPerBatch={3}
                 >
 
@@ -243,7 +266,7 @@ function OeufsComponent({route, navigation}: NavigationProps) {
                         colors={{dark: theme.colors.dark, light: theme.colors.light}}
                         titre={'Réinitialiser'}
                         onPress={() => {
-                            reinitialiserOeufsDb(dateChoisie, authContext.user, MODES_OEUFS[theme.mode])
+                            reinitialiserOeufsDb(dateChoisie, authContext.user, ModeOeufs[0])
                             ajouterOeufs(nbOeufsMois, setNbOeufsMois, dateChoisie.date(), undefined)
                         }}
                     />
